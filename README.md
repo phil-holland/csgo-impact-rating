@@ -1,0 +1,1 @@
+# csgo-impact-rating
