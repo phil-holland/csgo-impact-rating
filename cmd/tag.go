@@ -3,7 +3,10 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
+
+	"github.com/markus-wa/demoinfocs-golang/common"
 
 	dem "github.com/markus-wa/demoinfocs-golang"
 	"github.com/markus-wa/demoinfocs-golang/events"
@@ -40,6 +43,8 @@ var tagCmd = &cobra.Command{
 }
 
 var output internal.Demo
+var roundLive bool
+var roundTimes internal.RoundTimes
 
 func tag(demoPath string) {
 	fmt.Printf("Processing demo file: '%s'\n", demoPath)
@@ -52,15 +57,18 @@ func tag(demoPath string) {
 
 	p := dem.NewParser(f)
 
-	p.RegisterEventHandler(func(e events.RoundStart) {
+	p.RegisterEventHandler(func(e events.RoundFreezetimeEnd) {
 		// set header fields if this is the first round
+		// also remove all previously saved ticks
 		if p.GameState().TotalRoundsPlayed() == 0 {
 			internal.SetHeader(p, &output)
+			output.Ticks = nil
 		}
 
-		if internal.IsLive(p) {
-			writeTick(p)
-		}
+		roundTimes.StartTick = p.GameState().IngameTick()
+		roundTimes.PlantTick = 0
+
+		roundLive = true
 	})
 
 	p.RegisterEventHandler(func(e events.RoundEnd) {
@@ -72,26 +80,61 @@ func tag(demoPath string) {
 			internal.SetHeader(p, &output)
 		}
 
-		if internal.IsLive(p) {
-			writeTick(p)
-		}
+		roundLive = false
 	})
 
-	p.RegisterEventHandler(func(e events.Kill) {
-		var hs string
-		if e.IsHeadshot {
-			hs = " (HS)"
+	p.RegisterEventHandler(func(e events.BombPlanted) {
+		if internal.IsLive(p) {
+			roundTimes.PlantTick = p.GameState().IngameTick()
 		}
-		var wallBang string
-		if e.PenetratedObjects > 0 {
-			wallBang = " (WB)"
+
+		output.Ticks = append(output.Ticks, internal.Tick{
+			Type:      internal.TickTypeBombPlant,
+			GameState: internal.GetGameState(p, roundTimes),
+		})
+	})
+
+	p.RegisterEventHandler(func(e events.BombDefused) {
+		if internal.IsLive(p) {
+			var tick internal.Tick
+			tick.GameState = internal.GetGameState(p, roundTimes)
+			tick.Type = internal.TickTypeBombDefuse
+			tick.Tags = append(tick.Tags, internal.Tag{
+				Action: internal.ActionDefuse,
+				Player: e.Player.SteamID,
+			})
+			output.Ticks = append(output.Ticks, tick)
 		}
-		fmt.Printf("%s <%v%s%s> %s\n", e.Killer, e.Weapon, hs, wallBang, e.Victim)
 	})
 
 	p.RegisterEventHandler(func(e events.PlayerHurt) {
-		if internal.IsLive(p) {
-			//writeTick(p)
+		if internal.IsLive(p) && roundLive {
+			var tick internal.Tick
+
+			tick.GameState = internal.GetGameState(p, roundTimes)
+			tick.Type = internal.TickTypeDamage
+
+			// player damaging
+			if e.Attacker != nil {
+				tick.Tags = append(tick.Tags, internal.Tag{
+					Action: internal.ActionDamage,
+					Player: e.Attacker.SteamID,
+				})
+			}
+
+			// player getting hurt
+			tick.Tags = append(tick.Tags, internal.Tag{
+				Action: internal.ActionHurt,
+				Player: e.Player.SteamID,
+			})
+
+			output.Ticks = append(output.Ticks, tick)
+		}
+	})
+
+	p.RegisterEventHandler(func(e events.GamePhaseChanged) {
+		if p.GameState().GamePhase() == common.GamePhaseGameEnded {
+			writeOutput(demoPath + ".tagged.json")
 		}
 	})
 
@@ -101,7 +144,21 @@ func tag(demoPath string) {
 	}
 }
 
-func writeTick(p *dem.Parser) {
-	outputMarshalled, _ := json.Marshal(output)
-	fmt.Printf("%s\n", string(outputMarshalled))
+func writeOutput(outputPath string) {
+	fmt.Printf("Writing JSON output to: '%s'\n", outputPath)
+
+	outputMarshalled, err := json.MarshalIndent(output, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	file, err := os.Create(outputPath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	_, err = io.WriteString(file, string(outputMarshalled))
+	if err != nil {
+		panic(err)
+	}
 }

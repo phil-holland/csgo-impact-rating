@@ -71,3 +71,57 @@ func SetScores(p *dem.Parser, e *events.RoundEnd, output *Demo) {
 		}
 	}
 }
+
+type RoundTimes struct {
+	StartTick int
+	PlantTick int
+}
+
+func GetGameState(p *dem.Parser, roundTimes RoundTimes) GameState {
+	var state GameState
+
+	state.AliveCT = 0
+	for _, ct := range p.GameState().TeamCounterTerrorists().Members() {
+		if ct.IsAlive() {
+			state.AliveCT++
+		}
+	}
+
+	state.AliveT = 0
+	for _, t := range p.GameState().TeamTerrorists().Members() {
+		if t.IsAlive() {
+			state.AliveT++
+		}
+	}
+
+	state.MeanHealthCT = 0
+	for _, ct := range p.GameState().TeamCounterTerrorists().Members() {
+		if ct.IsAlive() {
+			state.MeanHealthCT += float64(ct.Hp)
+		}
+	}
+	if state.AliveCT > 0 {
+		state.MeanHealthCT /= float64(state.AliveCT)
+	}
+
+	state.MeanHealthT = 0
+	for _, t := range p.GameState().TeamTerrorists().Members() {
+		if t.IsAlive() {
+			state.MeanHealthT += float64(t.Hp)
+		}
+	}
+	if state.AliveT > 0 {
+		state.MeanHealthT /= float64(state.AliveT)
+	}
+
+	if roundTimes.PlantTick > 0 {
+		// bomb has been planted
+		state.RoundTime = float64(p.GameState().IngameTick()-roundTimes.PlantTick) / p.Header().TickRate()
+		state.BombPlanted = true
+	} else {
+		state.RoundTime = float64(p.GameState().IngameTick()-roundTimes.StartTick) / p.Header().TickRate()
+		state.BombPlanted = false
+	}
+
+	return state
+}
