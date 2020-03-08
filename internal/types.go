@@ -45,6 +45,8 @@ type Tick struct {
 }
 
 type GameState struct {
+	ScoreCT      int     `json:"scoreCT"`
+	ScoreT       int     `json:"scoreT"`
 	AliveCT      int     `json:"aliveCT"`
 	AliveT       int     `json:"aliveT"`
 	MeanHealthCT float64 `json:"meanHealthCT"`
@@ -53,6 +55,7 @@ type GameState struct {
 	MeanValueT   float64 `json:"meanValueT"`
 	RoundTime    float64 `json:"roundTime"`
 	BombPlanted  bool    `json:"bombPlanted"`
+	BombDefused  bool    `json:"bombDefused"`
 }
 
 type Tag struct {

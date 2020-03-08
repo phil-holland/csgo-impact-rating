@@ -6,8 +6,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/markus-wa/demoinfocs-golang/common"
-
+	"github.com/cheggaaa/pb/v3"
 	dem "github.com/markus-wa/demoinfocs-golang"
 	"github.com/markus-wa/demoinfocs-golang/events"
 	"github.com/phil-holland/csgo-impact-rating/internal"
@@ -45,6 +44,7 @@ var tagCmd = &cobra.Command{
 var output internal.Demo
 var roundLive bool
 var roundTimes internal.RoundTimes
+var alreadyWritten bool
 
 func tag(demoPath string) {
 	fmt.Printf("Processing demo file: '%s'\n", demoPath)
@@ -56,31 +56,42 @@ func tag(demoPath string) {
 	defer f.Close()
 
 	p := dem.NewParser(f)
+	bar := pb.StartNew(100)
 
 	p.RegisterEventHandler(func(e events.RoundFreezetimeEnd) {
 		// set header fields if this is the first round
 		// also remove all previously saved ticks
-		if p.GameState().TotalRoundsPlayed() == 0 {
+		if p.GameState().TeamCounterTerrorists().Score == 0 && p.GameState().TeamTerrorists().Score == 0 {
 			internal.SetHeader(p, &output)
 			output.Ticks = nil
 		}
 
 		roundTimes.StartTick = p.GameState().IngameTick()
 		roundTimes.PlantTick = 0
+		roundTimes.DefuseTick = 0
 
 		roundLive = true
 	})
 
 	p.RegisterEventHandler(func(e events.RoundEnd) {
+		bar.SetCurrent(int64(p.Progress() * 100))
+		roundLive = false
+	})
+
+	p.RegisterEventHandler(func(e events.ScoreUpdated) {
 		if p.GameState().TotalRoundsPlayed() > 0 {
 			// set team score values (dependent on round end event)
-			internal.SetScores(p, &e, &output)
+			internal.SetScores(p, &output)
 
 			// re-set the header at the end of each round
 			internal.SetHeader(p, &output)
 		}
 
-		roundLive = false
+		// write output at the end of the final round
+		if internal.HasMatchFinished(p) {
+			bar.Finish()
+			writeOutput(demoPath + ".tagged.json")
+		}
 	})
 
 	p.RegisterEventHandler(func(e events.BombPlanted) {
@@ -96,6 +107,8 @@ func tag(demoPath string) {
 
 	p.RegisterEventHandler(func(e events.BombDefused) {
 		if internal.IsLive(p) {
+			roundTimes.DefuseTick = p.GameState().IngameTick()
+
 			var tick internal.Tick
 			tick.GameState = internal.GetGameState(p, roundTimes)
 			tick.Type = internal.TickTypeBombDefuse
@@ -109,6 +122,8 @@ func tag(demoPath string) {
 
 	p.RegisterEventHandler(func(e events.PlayerHurt) {
 		if internal.IsLive(p) && roundLive {
+			e.Player.Hp = e.Health
+
 			var tick internal.Tick
 
 			tick.GameState = internal.GetGameState(p, roundTimes)
@@ -129,12 +144,6 @@ func tag(demoPath string) {
 			})
 
 			output.Ticks = append(output.Ticks, tick)
-		}
-	})
-
-	p.RegisterEventHandler(func(e events.GamePhaseChanged) {
-		if p.GameState().GamePhase() == common.GamePhaseGameEnded {
-			writeOutput(demoPath + ".tagged.json")
 		}
 	})
 
@@ -161,4 +170,5 @@ func writeOutput(outputPath string) {
 	if err != nil {
 		panic(err)
 	}
+
 }

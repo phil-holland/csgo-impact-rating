@@ -3,7 +3,6 @@ package internal
 import (
 	dem "github.com/markus-wa/demoinfocs-golang"
 	"github.com/markus-wa/demoinfocs-golang/common"
-	"github.com/markus-wa/demoinfocs-golang/events"
 )
 
 // IsLive returns true if the parser is currently at a point where the gamestate
@@ -49,36 +48,29 @@ func SetHeader(p *dem.Parser, output *Demo) {
 	}
 }
 
-func SetScores(p *dem.Parser, e *events.RoundEnd, output *Demo) {
+func SetScores(p *dem.Parser, output *Demo) {
 	teamCt := p.GameState().TeamCounterTerrorists()
 	teamT := p.GameState().TeamTerrorists()
-
-	if e.Winner == teamCt.Team() {
-		if output.Team1.ID == teamCt.ID {
-			output.Team1.Score = teamCt.Score + 1
-			output.Team2.Score = teamT.Score
-		} else if output.Team2.ID == teamCt.ID {
-			output.Team2.Score = teamCt.Score + 1
-			output.Team1.Score = teamT.Score
-		}
-	} else if e.Winner == teamT.Team() {
-		if output.Team1.ID == teamT.ID {
-			output.Team1.Score = teamT.Score + 1
-			output.Team2.Score = teamCt.Score
-		} else if output.Team2.ID == teamT.ID {
-			output.Team2.Score = teamT.Score + 1
-			output.Team1.Score = teamCt.Score
-		}
+	if output.Team1.ID == teamCt.ID {
+		output.Team1.Score = teamCt.Score
+		output.Team2.Score = teamT.Score
+	} else if output.Team2.ID == teamCt.ID {
+		output.Team2.Score = teamCt.Score
+		output.Team1.Score = teamT.Score
 	}
 }
 
 type RoundTimes struct {
-	StartTick int
-	PlantTick int
+	StartTick  int
+	PlantTick  int
+	DefuseTick int
 }
 
 func GetGameState(p *dem.Parser, roundTimes RoundTimes) GameState {
 	var state GameState
+
+	state.ScoreCT = p.GameState().TeamCounterTerrorists().Score
+	state.ScoreT = p.GameState().TeamTerrorists().Score
 
 	state.AliveCT = 0
 	for _, ct := range p.GameState().TeamCounterTerrorists().Members() {
@@ -118,10 +110,36 @@ func GetGameState(p *dem.Parser, roundTimes RoundTimes) GameState {
 		// bomb has been planted
 		state.RoundTime = float64(p.GameState().IngameTick()-roundTimes.PlantTick) / p.Header().TickRate()
 		state.BombPlanted = true
+
+		if roundTimes.DefuseTick > 0 {
+			// bomb has been defused
+			state.BombDefused = true
+		}
 	} else {
 		state.RoundTime = float64(p.GameState().IngameTick()-roundTimes.StartTick) / p.Header().TickRate()
 		state.BombPlanted = false
 	}
 
 	return state
+}
+
+// Returns true if one of the two teams has won the match
+func HasMatchFinished(p *dem.Parser) bool {
+	scoreCt := p.GameState().TeamCounterTerrorists().Score
+	scoreT := p.GameState().TeamTerrorists().Score
+
+	// detect win condition
+	if scoreCt > 15 {
+		if (scoreCt-16)%3 == 0 && scoreCt-scoreT > 1 {
+			return true
+		}
+	}
+
+	if scoreT > 15 {
+		if (scoreT-16)%3 == 0 && scoreT-scoreCt > 1 {
+			return true
+		}
+	}
+
+	return false
 }
