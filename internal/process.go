@@ -72,6 +72,9 @@ func GetGameState(p *dem.Parser, roundTimes RoundTimes) GameState {
 	state.ScoreCT = p.GameState().TeamCounterTerrorists().Score
 	state.ScoreT = p.GameState().TeamTerrorists().Score
 
+	state.CTTeamID = p.GameState().TeamCounterTerrorists().ID
+	state.TTeamID = p.GameState().TeamTerrorists().ID
+
 	state.AliveCT = 0
 	for _, ct := range p.GameState().TeamCounterTerrorists().Members() {
 		if ct.IsAlive() {
@@ -86,6 +89,7 @@ func GetGameState(p *dem.Parser, roundTimes RoundTimes) GameState {
 		}
 	}
 
+	// capture average health of each team
 	state.MeanHealthCT = 0
 	for _, ct := range p.GameState().TeamCounterTerrorists().Members() {
 		if ct.IsAlive() {
@@ -104,6 +108,16 @@ func GetGameState(p *dem.Parser, roundTimes RoundTimes) GameState {
 	}
 	if state.AliveT > 0 {
 		state.MeanHealthT /= float64(state.AliveT)
+	}
+
+	state.MeanValueCT = 0
+	if state.AliveCT > 0 {
+		state.MeanValueCT = float64(p.GameState().TeamCounterTerrorists().CurrentEquipmentValue()) / float64(state.AliveCT)
+	}
+
+	state.MeanValueT = 0
+	if state.AliveT > 0 {
+		state.MeanValueT = float64(p.GameState().TeamTerrorists().CurrentEquipmentValue()) / float64(state.AliveT)
 	}
 
 	if roundTimes.PlantTick > 0 {

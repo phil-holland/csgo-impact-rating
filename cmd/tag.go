@@ -56,7 +56,8 @@ func tag(demoPath string) {
 	defer f.Close()
 
 	p := dem.NewParser(f)
-	bar := pb.StartNew(100)
+	tmpl := `{{ green "Progress:" }} {{ bar . "[" "#" "#" "." "]"}} {{speed .}} {{percent .}}`
+	bar := pb.ProgressBarTemplate(tmpl).Start64(100)
 
 	p.RegisterEventHandler(func(e events.RoundFreezetimeEnd) {
 		// set header fields if this is the first round
@@ -89,6 +90,7 @@ func tag(demoPath string) {
 
 		// write output at the end of the final round
 		if internal.HasMatchFinished(p) {
+			bar.SetCurrent(100)
 			bar.Finish()
 			writeOutput(demoPath + ".tagged.json")
 		}
@@ -101,6 +103,7 @@ func tag(demoPath string) {
 
 		output.Ticks = append(output.Ticks, internal.Tick{
 			Type:      internal.TickTypeBombPlant,
+			Tick:      p.CurrentFrame(),
 			GameState: internal.GetGameState(p, roundTimes),
 		})
 	})
@@ -112,6 +115,7 @@ func tag(demoPath string) {
 			var tick internal.Tick
 			tick.GameState = internal.GetGameState(p, roundTimes)
 			tick.Type = internal.TickTypeBombDefuse
+			tick.Tick = p.CurrentFrame()
 			tick.Tags = append(tick.Tags, internal.Tag{
 				Action: internal.ActionDefuse,
 				Player: e.Player.SteamID,
@@ -128,6 +132,7 @@ func tag(demoPath string) {
 
 			tick.GameState = internal.GetGameState(p, roundTimes)
 			tick.Type = internal.TickTypeDamage
+			tick.Tick = p.CurrentFrame()
 
 			// player damaging
 			if e.Attacker != nil {
@@ -151,6 +156,8 @@ func tag(demoPath string) {
 	if err != nil {
 		panic(err)
 	}
+	bar.SetCurrent(100)
+	bar.Finish()
 }
 
 func writeOutput(outputPath string) {

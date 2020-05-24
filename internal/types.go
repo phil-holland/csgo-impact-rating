@@ -21,6 +21,9 @@ type Demo struct {
 	Team1 Team `json:"team1"`
 	Team2 Team `json:"team2"`
 
+	// TODO: create array of round winners
+	RoundWinners []int `json:"roundWinners"`
+
 	Players []Player `json:"players"`
 	Ticks   []Tick   `json:"ticks"`
 }
@@ -39,6 +42,7 @@ type Player struct {
 }
 
 type Tick struct {
+	Tick      int       `json:"tick"`
 	Type      string    `json:"type"`
 	GameState GameState `json:"gameState"`
 	Tags      []Tag     `json:"tags"`
@@ -47,6 +51,8 @@ type Tick struct {
 type GameState struct {
 	ScoreCT      int     `json:"scoreCT"`
 	ScoreT       int     `json:"scoreT"`
+	CTTeamID     int     `json:"ctTeamID"`
+	TTeamID      int     `json:"tTeamID"`
 	AliveCT      int     `json:"aliveCT"`
 	AliveT       int     `json:"aliveT"`
 	MeanHealthCT float64 `json:"meanHealthCT"`
