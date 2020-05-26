@@ -1,63 +1,32 @@
 package internal
 
 import (
-	dem "github.com/markus-wa/demoinfocs-golang"
-	"github.com/markus-wa/demoinfocs-golang/common"
+	dem "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs"
+	common "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs/common"
+	events "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs/events"
 )
 
 // IsLive returns true if the parser is currently at a point where the gamestate
 // should be saved
 func IsLive(p *dem.Parser) bool {
-	if !p.GameState().IsMatchStarted() {
+	if !(*p).GameState().IsMatchStarted() {
 		return false
 	}
 
-	if p.GameState().IsWarmupPeriod() {
+	if (*p).GameState().IsWarmupPeriod() {
 		return false
 	}
 
-	if !(p.GameState().GamePhase() == common.GamePhaseStartGamePhase ||
-		p.GameState().GamePhase() == common.GamePhaseTeamSideSwitch) {
+	if !((*p).GameState().GamePhase() == common.GamePhaseStartGamePhase ||
+		(*p).GameState().GamePhase() == common.GamePhaseTeamSideSwitch) {
 		return false
 	}
 
 	return true
 }
 
-func SetHeader(p *dem.Parser, output *Demo) {
-	team1 := p.GameState().TeamCounterTerrorists()
-	team2 := p.GameState().TeamTerrorists()
+func SetHeader(p dem.Parser, output *Demo) {
 
-	output.Team1.ID = team1.ID
-	output.Team2.ID = team2.ID
-
-	output.Team1.Name = team1.ClanName
-	output.Team2.Name = team2.ClanName
-
-	output.Team1.Flag = team1.Flag
-	output.Team2.Flag = team2.Flag
-
-	output.Players = nil
-	for _, player := range p.GameState().Participants().Playing() {
-		steamID := player.SteamID
-		name := player.Name
-		teamID := p.GameState().Team(player.Team).ID
-
-		output.Players = append(output.Players,
-			Player{SteamID: steamID, Name: name, TeamID: teamID})
-	}
-}
-
-func SetScores(p *dem.Parser, output *Demo) {
-	teamCt := p.GameState().TeamCounterTerrorists()
-	teamT := p.GameState().TeamTerrorists()
-	if output.Team1.ID == teamCt.ID {
-		output.Team1.Score = teamCt.Score
-		output.Team2.Score = teamT.Score
-	} else if output.Team2.ID == teamCt.ID {
-		output.Team2.Score = teamCt.Score
-		output.Team1.Score = teamT.Score
-	}
 }
 
 type RoundTimes struct {
@@ -66,44 +35,43 @@ type RoundTimes struct {
 	DefuseTick int
 }
 
-func GetGameState(p *dem.Parser, roundTimes RoundTimes) GameState {
+func GetGameState(p dem.Parser, roundTimes RoundTimes, hurtEvent *events.PlayerHurt) GameState {
 	var state GameState
 
-	state.ScoreCT = p.GameState().TeamCounterTerrorists().Score
-	state.ScoreT = p.GameState().TeamTerrorists().Score
-
-	state.CTTeamID = p.GameState().TeamCounterTerrorists().ID
-	state.TTeamID = p.GameState().TeamTerrorists().ID
-
 	state.AliveCT = 0
-	for _, ct := range p.GameState().TeamCounterTerrorists().Members() {
-		if ct.IsAlive() {
-			state.AliveCT++
-		}
-	}
-
-	state.AliveT = 0
-	for _, t := range p.GameState().TeamTerrorists().Members() {
-		if t.IsAlive() {
-			state.AliveT++
-		}
-	}
-
-	// capture average health of each team
 	state.MeanHealthCT = 0
 	for _, ct := range p.GameState().TeamCounterTerrorists().Members() {
-		if ct.IsAlive() {
-			state.MeanHealthCT += float64(ct.Hp)
+		health := ct.Health()
+
+		if hurtEvent != nil {
+			if ct.SteamID64 == hurtEvent.Player.SteamID64 {
+				health -= hurtEvent.HealthDamage
+			}
+		}
+
+		if health > 0 {
+			state.AliveCT++
+			state.MeanHealthCT += float64(health)
 		}
 	}
 	if state.AliveCT > 0 {
 		state.MeanHealthCT /= float64(state.AliveCT)
 	}
 
+	state.AliveT = 0
 	state.MeanHealthT = 0
 	for _, t := range p.GameState().TeamTerrorists().Members() {
-		if t.IsAlive() {
-			state.MeanHealthT += float64(t.Hp)
+		health := t.Health()
+
+		if hurtEvent != nil {
+			if t.SteamID64 == hurtEvent.Player.SteamID64 {
+				health -= hurtEvent.HealthDamage
+			}
+		}
+
+		if health > 0 {
+			state.AliveT++
+			state.MeanHealthT += float64(health)
 		}
 	}
 	if state.AliveT > 0 {
@@ -122,7 +90,7 @@ func GetGameState(p *dem.Parser, roundTimes RoundTimes) GameState {
 
 	if roundTimes.PlantTick > 0 {
 		// bomb has been planted
-		state.RoundTime = float64(p.GameState().IngameTick()-roundTimes.PlantTick) / p.Header().TickRate()
+		state.RoundTime = float64(p.GameState().IngameTick()-roundTimes.PlantTick) / p.TickRate()
 		state.BombPlanted = true
 
 		if roundTimes.DefuseTick > 0 {
@@ -130,27 +98,24 @@ func GetGameState(p *dem.Parser, roundTimes RoundTimes) GameState {
 			state.BombDefused = true
 		}
 	} else {
-		state.RoundTime = float64(p.GameState().IngameTick()-roundTimes.StartTick) / p.Header().TickRate()
+		state.RoundTime = float64(p.GameState().IngameTick()-roundTimes.StartTick) / p.TickRate()
 		state.BombPlanted = false
 	}
 
 	return state
 }
 
-// Returns true if one of the two teams has won the match
-func HasMatchFinished(p *dem.Parser) bool {
-	scoreCt := p.GameState().TeamCounterTerrorists().Score
-	scoreT := p.GameState().TeamTerrorists().Score
-
+// HasMatchFinished returns true if one of the two teams has won the match (reached 16 rounds or won in overtime)
+func HasMatchFinished(score1 int, score2 int) bool {
 	// detect win condition
-	if scoreCt > 15 {
-		if (scoreCt-16)%3 == 0 && scoreCt-scoreT > 1 {
+	if score1 > 15 {
+		if (score1-16)%3 == 0 && score1-score2 > 1 {
 			return true
 		}
 	}
 
-	if scoreT > 15 {
-		if (scoreT-16)%3 == 0 && scoreT-scoreCt > 1 {
+	if score2 > 15 {
+		if (score2-16)%3 == 0 && score2-score1 > 1 {
 			return true
 		}
 	}

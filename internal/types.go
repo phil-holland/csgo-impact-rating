@@ -1,15 +1,18 @@
 package internal
 
-const TickTypeDamage = "player_damaged"
-const TickTypeBombPlant = "bomb_planted"
-const TickTypeBombDefuse = "bomb_defused"
+const TickTypeRoundStart = "roundStart"
+const TickTypePreDamage = "preDamaged"
+const TickTypeDamage = "playerDamaged"
+const TickTypeBombPlant = "bombPlanted"
+const TickTypeBombDefuse = "bombDefused"
+const TickTypeItemPickup = "itemPickup"
+const TickTypeItemDrop = "itemDrop"
 
 // ActionDamage = player damaging another player
 const ActionDamage string = "damage"
 
-// ActionDamageBlind = player damaging a blind player
-// TODO: implement "flash assist" events
-//const ActionDamageBlind string = "damageBlind"
+// ActionFlashAssist = player flashed another player getting damaged
+const ActionFlashAssist string = "flashAssist"
 
 // ActionHurt = player being damaged
 const ActionHurt string = "hurt"
@@ -18,41 +21,34 @@ const ActionHurt string = "hurt"
 const ActionDefuse string = "defuse"
 
 type Demo struct {
-	Team1 Team `json:"team1"`
-	Team2 Team `json:"team2"`
+	Ticks []Tick `json:"ticks"`
+}
 
-	// TODO: create array of round winners
-	RoundWinners []int `json:"roundWinners"`
-
-	Players []Player `json:"players"`
-	Ticks   []Tick   `json:"ticks"`
+type Tick struct {
+	Tick        int       `json:"tick"`
+	Type        string    `json:"type"`
+	ScoreCT     int       `json:"scoreCT"`
+	ScoreT      int       `json:"scoreT"`
+	TeamCT      Team      `json:"teamCt"`
+	TeamT       Team      `json:"teamT"`
+	Players     []Player  `json:"players"`
+	GameState   GameState `json:"gameState"`
+	Tags        []Tag     `json:"tags"`
+	RoundWinner uint      `json:"roundWinner"`
 }
 
 type Team struct {
-	ID    int    `json:"id"`
-	Name  string `json:"name"`
-	Flag  string `json:"flag"`
-	Score int    `json:"score"`
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 type Player struct {
-	SteamID int64  `json:"steamID"`
+	SteamID uint64 `json:"steamID"`
 	Name    string `json:"name"`
 	TeamID  int    `json:"teamID"`
 }
 
-type Tick struct {
-	Tick      int       `json:"tick"`
-	Type      string    `json:"type"`
-	GameState GameState `json:"gameState"`
-	Tags      []Tag     `json:"tags"`
-}
-
 type GameState struct {
-	ScoreCT      int     `json:"scoreCT"`
-	ScoreT       int     `json:"scoreT"`
-	CTTeamID     int     `json:"ctTeamID"`
-	TTeamID      int     `json:"tTeamID"`
 	AliveCT      int     `json:"aliveCT"`
 	AliveT       int     `json:"aliveT"`
 	MeanHealthCT float64 `json:"meanHealthCT"`
@@ -66,5 +62,25 @@ type GameState struct {
 
 type Tag struct {
 	Action string `json:"action"`
-	Player int64  `json:"player"`
+	Player uint64 `json:"player"`
+}
+
+type RatingPlayer struct {
+	SteamID     uint64  `json:"steamID"`
+	Name        string  `json:"name"`
+	TotalRating float64 `json:"totalRating"`
+}
+
+type RatingChange struct {
+	Tick   int     `json:"tick"`
+	Round  int     `json:"round"`
+	Player uint64  `json:"player"`
+	Change float64 `json:"change"`
+	Action string  `json:"action"`
+}
+
+type Rating struct {
+	RoundsPlayed  int            `json:"roundsPlayed"`
+	Players       []RatingPlayer `json:"players"`
+	RatingChanges []RatingChange `json:"ratingChanges"`
 }

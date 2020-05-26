@@ -1,4 +1,6 @@
 demos/*
+scripts/*
+out/*
 
 # Binaries for programs and plugins
 *.exe

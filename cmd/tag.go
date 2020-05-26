@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/cheggaaa/pb/v3"
-	dem "github.com/markus-wa/demoinfocs-golang"
-	"github.com/markus-wa/demoinfocs-golang/events"
+	dem "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs"
+	events "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs/events"
 	"github.com/phil-holland/csgo-impact-rating/internal"
 	"github.com/spf13/cobra"
 )
@@ -41,13 +41,20 @@ var tagCmd = &cobra.Command{
 	},
 }
 
-var output internal.Demo
-var roundLive bool
-var roundTimes internal.RoundTimes
-var alreadyWritten bool
-
 func tag(demoPath string) {
-	fmt.Printf("Processing demo file: '%s'\n", demoPath)
+	var output internal.Demo
+	var roundLive bool
+	var roundTimes internal.RoundTimes
+	var tickBuffer []internal.Tick
+	var lastKillTick int
+	var lastTScore int = -1
+	var lastCtScore int = -1
+	var matchFinished bool
+
+	// map from player id -> the id of the player who last flashed them (could be teammates)
+	var lastFlashedPlayer map[uint64]uint64 = make(map[uint64]uint64)
+
+	fmt.Printf("Tagging demo file: '%s'\n", demoPath)
 
 	f, err := os.Open(demoPath)
 	if err != nil {
@@ -60,11 +67,31 @@ func tag(demoPath string) {
 	bar := pb.ProgressBarTemplate(tmpl).Start64(100)
 
 	p.RegisterEventHandler(func(e events.RoundFreezetimeEnd) {
-		// set header fields if this is the first round
-		// also remove all previously saved ticks
-		if p.GameState().TeamCounterTerrorists().Score == 0 && p.GameState().TeamTerrorists().Score == 0 {
-			internal.SetHeader(p, &output)
+		if matchFinished {
+			return
+		}
+
+		teamCt := p.GameState().TeamCounterTerrorists()
+		teamT := p.GameState().TeamTerrorists()
+
+		// empty ticks if this is round 1 (fixes weird warmups)
+		if teamCt.Score() == 0 && teamT.Score() == 0 {
 			output.Ticks = nil
+			tickBuffer = nil
+		}
+
+		// empty tick buffer if the score at the start of this round is the same as something that's been played already
+		if lastTScore == teamT.Score() && lastCtScore == teamCt.Score() {
+			tickBuffer = nil
+		}
+
+		lastTScore = teamT.Score()
+		lastCtScore = teamCt.Score()
+
+		if tickBuffer != nil {
+			output.Ticks = append(output.Ticks, tickBuffer...)
+			tickBuffer = nil
+			writeOutput(&output, demoPath+".tagged.json")
 		}
 
 		roundTimes.StartTick = p.GameState().IngameTick()
@@ -72,83 +99,157 @@ func tag(demoPath string) {
 		roundTimes.DefuseTick = 0
 
 		roundLive = true
+
+		tick := createTick(&p)
+		tick.Type = internal.TickTypeRoundStart
+		tick.GameState = internal.GetGameState(p, roundTimes, nil)
+		tickBuffer = append(tickBuffer, tick)
 	})
 
 	p.RegisterEventHandler(func(e events.RoundEnd) {
-		bar.SetCurrent(int64(p.Progress() * 100))
-		roundLive = false
-	})
-
-	p.RegisterEventHandler(func(e events.ScoreUpdated) {
-		if p.GameState().TotalRoundsPlayed() > 0 {
-			// set team score values (dependent on round end event)
-			internal.SetScores(p, &output)
-
-			// re-set the header at the end of each round
-			internal.SetHeader(p, &output)
+		if matchFinished {
+			return
 		}
 
-		// write output at the end of the final round
-		if internal.HasMatchFinished(p) {
-			bar.SetCurrent(100)
-			bar.Finish()
-			writeOutput(demoPath + ".tagged.json")
+		bar.SetCurrent(int64(p.Progress() * 100))
+
+		roundLive = false
+		switch e.Reason {
+		case events.RoundEndReasonTargetBombed, events.RoundEndReasonBombDefused, events.RoundEndReasonCTWin, events.RoundEndReasonTerroristsWin, events.RoundEndReasonTargetSaved:
+			var winningTeam uint
+			if p.GameState().Team(e.Winner) == p.GameState().TeamCounterTerrorists() {
+				winningTeam = 0
+				matchFinished = internal.HasMatchFinished(lastCtScore+1, lastTScore)
+			} else if p.GameState().Team(e.Winner) == p.GameState().TeamTerrorists() {
+				winningTeam = 1
+				matchFinished = internal.HasMatchFinished(lastCtScore, lastTScore+1)
+			}
+
+			for idx := range tickBuffer {
+				tickBuffer[idx].RoundWinner = winningTeam
+			}
+		default:
+			tickBuffer = nil
 		}
 	})
 
 	p.RegisterEventHandler(func(e events.BombPlanted) {
-		if internal.IsLive(p) {
+		if matchFinished {
+			return
+		}
+
+		if internal.IsLive(&p) {
 			roundTimes.PlantTick = p.GameState().IngameTick()
 		}
 
-		output.Ticks = append(output.Ticks, internal.Tick{
-			Type:      internal.TickTypeBombPlant,
-			Tick:      p.CurrentFrame(),
-			GameState: internal.GetGameState(p, roundTimes),
-		})
+		tick := createTick(&p)
+		tick.Type = internal.TickTypeBombPlant
+
+		tick.GameState = internal.GetGameState(p, roundTimes, nil)
+
+		tickBuffer = append(tickBuffer, tick)
 	})
 
 	p.RegisterEventHandler(func(e events.BombDefused) {
-		if internal.IsLive(p) {
+		if matchFinished {
+			return
+		}
+
+		if internal.IsLive(&p) {
 			roundTimes.DefuseTick = p.GameState().IngameTick()
 
-			var tick internal.Tick
-			tick.GameState = internal.GetGameState(p, roundTimes)
+			tick := createTick(&p)
+			tick.GameState = internal.GetGameState(p, roundTimes, nil)
 			tick.Type = internal.TickTypeBombDefuse
-			tick.Tick = p.CurrentFrame()
 			tick.Tags = append(tick.Tags, internal.Tag{
 				Action: internal.ActionDefuse,
-				Player: e.Player.SteamID,
+				Player: e.Player.SteamID64,
 			})
-			output.Ticks = append(output.Ticks, tick)
+			tickBuffer = append(tickBuffer, tick)
 		}
 	})
 
+	p.RegisterEventHandler(func(e events.ItemPickup) {
+		if matchFinished {
+			return
+		}
+
+		if internal.IsLive(&p) && roundLive && e.Weapon.String() != "C4" {
+			tick := createTick(&p)
+
+			tick.GameState = internal.GetGameState(p, roundTimes, nil)
+			tick.Type = internal.TickTypeItemPickup
+
+			tickBuffer = append(tickBuffer, tick)
+		}
+	})
+
+	p.RegisterEventHandler(func(e events.ItemDrop) {
+		if matchFinished {
+			return
+		}
+
+		if internal.IsLive(&p) && roundLive && p.CurrentFrame() != lastKillTick && e.Weapon.String() != "C4" {
+			tick := createTick(&p)
+
+			tick.GameState = internal.GetGameState(p, roundTimes, nil)
+			tick.Type = internal.TickTypeItemDrop
+
+			tickBuffer = append(tickBuffer, tick)
+		}
+	})
+
+	p.RegisterEventHandler(func(e events.PlayerFlashed) {
+		if matchFinished {
+			return
+		}
+
+		// update the last flashed player map
+		lastFlashedPlayer[e.Player.SteamID64] = e.Attacker.SteamID64
+	})
+
 	p.RegisterEventHandler(func(e events.PlayerHurt) {
-		if internal.IsLive(p) && roundLive {
-			e.Player.Hp = e.Health
+		if matchFinished {
+			return
+		}
 
-			var tick internal.Tick
+		if internal.IsLive(&p) && roundLive {
+			// create the pre-damage tick
+			pretick := createTick(&p)
+			pretick.GameState = internal.GetGameState(p, roundTimes, nil)
+			pretick.Type = internal.TickTypePreDamage
+			tickBuffer = append(tickBuffer, pretick)
 
-			tick.GameState = internal.GetGameState(p, roundTimes)
+			tick := createTick(&p)
+			tick.GameState = internal.GetGameState(p, roundTimes, &e)
 			tick.Type = internal.TickTypeDamage
-			tick.Tick = p.CurrentFrame()
 
 			// player damaging
 			if e.Attacker != nil {
 				tick.Tags = append(tick.Tags, internal.Tag{
 					Action: internal.ActionDamage,
-					Player: e.Attacker.SteamID,
+					Player: e.Attacker.SteamID64,
 				})
 			}
 
-			// player getting hurt
+			if e.Player.IsBlinded() {
+				if val, ok := lastFlashedPlayer[e.Player.SteamID64]; ok {
+					tick.Tags = append(tick.Tags, internal.Tag{
+						Action: internal.ActionFlashAssist,
+						Player: val,
+					})
+				}
+			}
+
 			tick.Tags = append(tick.Tags, internal.Tag{
 				Action: internal.ActionHurt,
-				Player: e.Player.SteamID,
+				Player: e.Player.SteamID64,
 			})
+			tickBuffer = append(tickBuffer, tick)
 
-			output.Ticks = append(output.Ticks, tick)
+			if e.Health <= 0 {
+				lastKillTick = p.CurrentFrame()
+			}
 		}
 	})
 
@@ -156,13 +257,48 @@ func tag(demoPath string) {
 	if err != nil {
 		panic(err)
 	}
+
+	if tickBuffer != nil {
+		output.Ticks = append(output.Ticks, tickBuffer...)
+		tickBuffer = nil
+		writeOutput(&output, demoPath+".tagged.json")
+	}
+
 	bar.SetCurrent(100)
 	bar.Finish()
 }
 
-func writeOutput(outputPath string) {
-	fmt.Printf("Writing JSON output to: '%s'\n", outputPath)
+func createTick(p *dem.Parser) internal.Tick {
+	var tick internal.Tick
 
+	tick.ScoreCT = (*p).GameState().TeamCounterTerrorists().Score()
+	tick.ScoreT = (*p).GameState().TeamTerrorists().Score()
+
+	teamCt := (*p).GameState().TeamCounterTerrorists()
+	teamT := (*p).GameState().TeamTerrorists()
+
+	tick.TeamCT.ID = teamCt.ID()
+	tick.TeamT.ID = teamT.ID()
+
+	tick.TeamCT.Name = teamCt.ClanName()
+	tick.TeamT.Name = teamT.ClanName()
+
+	tick.Players = nil
+	for _, player := range (*p).GameState().Participants().Playing() {
+		steamID := player.SteamID64
+		name := player.Name
+		teamID := (*p).GameState().Team(player.Team).ID()
+
+		tick.Players = append(tick.Players,
+			internal.Player{SteamID: steamID, Name: name, TeamID: teamID})
+	}
+
+	tick.Tick = (*p).CurrentFrame()
+
+	return tick
+}
+
+func writeOutput(output *internal.Demo, outputPath string) {
 	outputMarshalled, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
 		panic(err)
