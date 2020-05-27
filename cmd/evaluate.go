@@ -38,11 +38,6 @@ var evaluateCmd = &cobra.Command{
 	},
 }
 
-type Team struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
-
 func evaluate(path string) {
 	// prepare a csv file
 	fmt.Printf("Reading contents of json file: \"%s\"\n", path)
@@ -86,6 +81,7 @@ func evaluate(path string) {
 	cmd := exec.Command("lightgbm", "task=predict", "data=\""+file.Name()+"\"",
 		"header=true", "label_column=name:roundWinner", "input_model=\""+modelPath+"\"",
 		"output_result=\""+rfile.Name()+"\"")
+	fmt.Printf("Running command: %s\n", cmd.String())
 	stdout, err := cmd.Output()
 	if err != nil {
 		panic(err.Error())
@@ -138,6 +134,7 @@ func evaluate(path string) {
 			var flashingPlayer uint64 = 0
 			var damagingPlayer uint64 = 0
 			var hurtingPlayer uint64 = 0
+			var tradedPlayers []uint64
 
 			for _, tag := range tick.Tags {
 				if tag.Action == internal.ActionFlashAssist {
@@ -146,71 +143,84 @@ func evaluate(path string) {
 					damagingPlayer = tag.Player
 				} else if tag.Action == internal.ActionHurt {
 					hurtingPlayer = tag.Player
+				} else if tag.Action == internal.ActionTradeDamage {
+					tradedPlayers = append(tradedPlayers, tag.Player)
+				}
+			}
+
+			splitChange := change
+			if flashingPlayer != 0 && damagingPlayer != 0 && len(tradedPlayers) > 0 {
+				splitChange /= 3.0
+			} else if damagingPlayer != 0 && len(tradedPlayers) > 0 {
+				splitChange /= 2.0
+			} else if flashingPlayer != 0 && damagingPlayer != 0 {
+				splitChange /= 2.0
+			}
+
+			if damagingPlayer != 0 {
+				if teamIds[damagingPlayer] == tick.TeamCT.ID {
+					rating.RatingChanges = append(rating.RatingChanges, internal.RatingChange{
+						Tick:   tick.Tick,
+						Round:  tick.ScoreCT + tick.ScoreT + 1,
+						Player: damagingPlayer,
+						Change: splitChange,
+						Action: internal.ActionDamage,
+					})
+					ratings[damagingPlayer] += splitChange
+				} else if teamIds[damagingPlayer] == tick.TeamT.ID {
+					rating.RatingChanges = append(rating.RatingChanges, internal.RatingChange{
+						Tick:   tick.Tick,
+						Round:  tick.ScoreCT + tick.ScoreT + 1,
+						Player: damagingPlayer,
+						Change: -splitChange,
+						Action: internal.ActionDamage,
+					})
+					ratings[damagingPlayer] -= splitChange
 				}
 			}
 
 			if flashingPlayer != 0 {
-				if damagingPlayer != 0 {
-					if teamIds[damagingPlayer] == tick.TeamCT.ID {
-						rating.RatingChanges = append(rating.RatingChanges, internal.RatingChange{
-							Tick:   tick.Tick,
-							Round:  tick.ScoreCT + tick.ScoreT + 1,
-							Player: damagingPlayer,
-							Change: change * 0.5,
-							Action: internal.ActionDamage,
-						})
-						ratings[damagingPlayer] += change * 0.5
-					} else if teamIds[damagingPlayer] == tick.TeamT.ID {
-						rating.RatingChanges = append(rating.RatingChanges, internal.RatingChange{
-							Tick:   tick.Tick,
-							Round:  tick.ScoreCT + tick.ScoreT + 1,
-							Player: damagingPlayer,
-							Change: -change * 0.5,
-							Action: internal.ActionDamage,
-						})
-						ratings[damagingPlayer] -= change * 0.5
-					}
-				}
-
 				if teamIds[flashingPlayer] == tick.TeamCT.ID {
 					rating.RatingChanges = append(rating.RatingChanges, internal.RatingChange{
 						Tick:   tick.Tick,
 						Round:  tick.ScoreCT + tick.ScoreT + 1,
 						Player: flashingPlayer,
-						Change: change * 0.5,
+						Change: splitChange,
 						Action: internal.ActionFlashAssist,
 					})
-					ratings[flashingPlayer] += change * 0.5
+					ratings[flashingPlayer] += splitChange
 				} else if teamIds[flashingPlayer] == tick.TeamT.ID {
 					rating.RatingChanges = append(rating.RatingChanges, internal.RatingChange{
 						Tick:   tick.Tick,
 						Round:  tick.ScoreCT + tick.ScoreT + 1,
 						Player: flashingPlayer,
-						Change: -change * 0.5,
+						Change: -splitChange,
 						Action: internal.ActionFlashAssist,
 					})
-					ratings[flashingPlayer] -= change * 0.5
+					ratings[flashingPlayer] -= splitChange
 				}
-			} else {
-				if damagingPlayer != 0 {
-					if teamIds[damagingPlayer] == tick.TeamCT.ID {
+			}
+
+			if len(tradedPlayers) > 0 {
+				for _, tp := range tradedPlayers {
+					if teamIds[tp] == tick.TeamCT.ID {
 						rating.RatingChanges = append(rating.RatingChanges, internal.RatingChange{
 							Tick:   tick.Tick,
 							Round:  tick.ScoreCT + tick.ScoreT + 1,
-							Player: damagingPlayer,
-							Change: change,
-							Action: internal.ActionDamage,
+							Player: tp,
+							Change: splitChange / float64(len(tradedPlayers)),
+							Action: internal.ActionTradeDamage,
 						})
-						ratings[damagingPlayer] += change
-					} else if teamIds[damagingPlayer] == tick.TeamT.ID {
+						ratings[tp] += splitChange
+					} else if teamIds[tp] == tick.TeamT.ID {
 						rating.RatingChanges = append(rating.RatingChanges, internal.RatingChange{
 							Tick:   tick.Tick,
 							Round:  tick.ScoreCT + tick.ScoreT + 1,
-							Player: damagingPlayer,
-							Change: -change,
-							Action: internal.ActionDamage,
+							Player: tp,
+							Change: -splitChange / float64(len(tradedPlayers)),
+							Action: internal.ActionTradeDamage,
 						})
-						ratings[damagingPlayer] -= change
+						ratings[tp] -= splitChange
 					}
 				}
 			}
@@ -285,11 +295,31 @@ func evaluate(path string) {
 	for k := range names {
 		roundRatings[k] = 0.0
 	}
+
+	bestRoundRating := 0.0
+	bestRoundPlayer := ""
+	bestRound := 0
+
+	worstRoundRating := 0.0
+	worstRoundPlayer := ""
+	worstRound := 0
+
 	for _, change := range rating.RatingChanges {
 		if change.Round > currentRound {
 			fmt.Printf("\n======================== Round %d ========================\n", currentRound)
 			for k, v := range names {
-				fmt.Printf("> Player %s got an impact rating of: %.5f\n", v, 100.0*roundRatings[k])
+				r := 100.0 * roundRatings[k]
+				fmt.Printf("> Player %s got an impact rating of: %.5f\n", v, r)
+				if r > bestRoundRating {
+					bestRoundRating = r
+					bestRoundPlayer = v
+					bestRound = currentRound
+				}
+				if r < worstRoundRating {
+					worstRoundRating = r
+					worstRoundPlayer = v
+					worstRound = currentRound
+				}
 				roundRatings[k] = 0.0
 			}
 			currentRound = change.Round
@@ -301,6 +331,10 @@ func evaluate(path string) {
 	for k, v := range names {
 		fmt.Printf("> Player %s got an average impact rating of: %.5f\n", v, 100.0*ratings[k]/float64(roundsPlayed))
 	}
+
+	fmt.Printf("\n======================== Big Rounds ========================\n")
+	fmt.Printf("> Player %s got an impact rating of %.5f in round %d\n", bestRoundPlayer, bestRoundRating, bestRound)
+	fmt.Printf("> Player %s got an impact rating of %.5f in round %d\n\n", worstRoundPlayer, worstRoundRating, worstRound)
 
 	rating.RoundsPlayed = roundsPlayed
 

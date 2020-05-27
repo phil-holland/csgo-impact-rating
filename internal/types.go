@@ -11,6 +11,9 @@ const TickTypeItemDrop = "itemDrop"
 // ActionDamage = player damaging another player
 const ActionDamage string = "damage"
 
+// ActionTradeDamage = killed player's killer being damaged
+const ActionTradeDamage string = "tradeDamage"
+
 // ActionFlashAssist = player flashed another player getting damaged
 const ActionFlashAssist string = "flashAssist"
 

@@ -54,6 +54,9 @@ func tag(demoPath string) {
 	// map from player id -> the id of the player who last flashed them (could be teammates)
 	var lastFlashedPlayer map[uint64]uint64 = make(map[uint64]uint64)
 
+	// map from player1 id -> (map of player2 ids of last tick where player 1 damaged player 2)
+	var lastDamageTick map[uint64](map[uint64]int) = make(map[uint64](map[uint64]int))
+
 	fmt.Printf("Tagging demo file: '%s'\n", demoPath)
 
 	f, err := os.Open(demoPath)
@@ -238,6 +241,24 @@ func tag(demoPath string) {
 						Action: internal.ActionFlashAssist,
 						Player: val,
 					})
+				}
+			}
+
+			if e.Attacker != nil {
+				if _, ok := lastDamageTick[e.Attacker.SteamID64]; !ok {
+					lastDamageTick[e.Attacker.SteamID64] = make(map[uint64]int)
+				}
+				lastDamageTick[e.Attacker.SteamID64][e.Player.SteamID64] = p.CurrentFrame()
+			}
+
+			if _, ok := lastDamageTick[e.Player.SteamID64]; ok {
+				for id, t := range lastDamageTick[e.Player.SteamID64] {
+					if int64(p.CurrentFrame()-t)*p.TickTime().Microseconds() <= 2000000 {
+						tick.Tags = append(tick.Tags, internal.Tag{
+							Action: internal.ActionTradeDamage,
+							Player: id,
+						})
+					}
 				}
 			}
 
