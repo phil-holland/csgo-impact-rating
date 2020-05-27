@@ -68,10 +68,19 @@ type Tag struct {
 	Player uint64 `json:"player"`
 }
 
+type RatingBreakdown struct {
+	DamageRating      float64 `json:"damageRating"`
+	FlashAssistRating float64 `json:"flashAssistRating"`
+	TradeDamageRating float64 `json:"tradeDamageRating"`
+	DefuseRating      float64 `json:"defuseRating"`
+	HurtRating        float64 `json:"hurtRating"`
+}
+
 type RatingPlayer struct {
-	SteamID     uint64  `json:"steamID"`
-	Name        string  `json:"name"`
-	TotalRating float64 `json:"totalRating"`
+	SteamID         uint64          `json:"steamID"`
+	Name            string          `json:"name"`
+	TotalRating     float64         `json:"totalRating"`
+	RatingBreakdown RatingBreakdown `json:"ratingBreakdown"`
 }
 
 type RatingChange struct {
@@ -82,8 +91,15 @@ type RatingChange struct {
 	Action string  `json:"action"`
 }
 
+type RoundOutcomePrediction struct {
+	Tick              int     `json:"tick"`
+	Round             int     `json:"round"`
+	OutcomePrediction float64 `json:"outcomePrediction"`
+}
+
 type Rating struct {
-	RoundsPlayed  int            `json:"roundsPlayed"`
-	Players       []RatingPlayer `json:"players"`
-	RatingChanges []RatingChange `json:"ratingChanges"`
+	RoundsPlayed            int                      `json:"roundsPlayed"`
+	Players                 []RatingPlayer           `json:"players"`
+	RatingChanges           []RatingChange           `json:"ratingChanges"`
+	RoundOutcomePredictions []RoundOutcomePrediction `json:"roundOutcomePredictions"`
 }

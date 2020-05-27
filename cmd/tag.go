@@ -208,7 +208,9 @@ func tag(demoPath string) {
 		}
 
 		// update the last flashed player map
-		lastFlashedPlayer[e.Player.SteamID64] = e.Attacker.SteamID64
+		if e.FlashDuration().Seconds() >= 1.0 {
+			lastFlashedPlayer[e.Player.SteamID64] = e.Attacker.SteamID64
+		}
 	})
 
 	p.RegisterEventHandler(func(e events.PlayerHurt) {
@@ -235,7 +237,7 @@ func tag(demoPath string) {
 				})
 			}
 
-			if e.Player.IsBlinded() {
+			if e.Player.FlashDurationTime() >= 1.0 {
 				if val, ok := lastFlashedPlayer[e.Player.SteamID64]; ok {
 					tick.Tags = append(tick.Tags, internal.Tag{
 						Action: internal.ActionFlashAssist,
@@ -253,7 +255,7 @@ func tag(demoPath string) {
 
 			if _, ok := lastDamageTick[e.Player.SteamID64]; ok {
 				for id, t := range lastDamageTick[e.Player.SteamID64] {
-					if int64(p.CurrentFrame()-t)*p.TickTime().Microseconds() <= 2000000 {
+					if float64(p.CurrentFrame()-t)*p.TickTime().Seconds() <= 2.0 {
 						tick.Tags = append(tick.Tags, internal.Tag{
 							Action: internal.ActionTradeDamage,
 							Player: id,
