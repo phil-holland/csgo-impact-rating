@@ -361,7 +361,7 @@ func evaluate(path string) {
 
 		for _, change := range ratingOutput.RatingChanges {
 			if change.Round > currentRound {
-				fmt.Printf("\n======================== Round %d ========================\n", currentRound)
+				fmt.Printf("\n[ Round %d ]\n", currentRound)
 				for _, name := range playerNames {
 					id := ids[name]
 					r := 100.0 * roundRatings[id]
@@ -406,7 +406,7 @@ func evaluate(path string) {
 			}
 		}
 
-		fmt.Printf("\n======================== Overall ========================\n")
+		fmt.Printf("\n[ Overall ]\n")
 		for _, name := range playerNames {
 			id := ids[name]
 			avgRating := 100.0 * ratings[id] / float64(roundsPlayed)
@@ -421,7 +421,7 @@ func evaluate(path string) {
 				name, avgRating, avgDamageRating, avgFlashAssistRating, avgTradeDamageRating, avgDefuseRating, avgHurtRating)
 		}
 
-		fmt.Printf("\n======================== Big Rounds ========================\n")
+		fmt.Printf("\n[ Big Rounds ]\n")
 		fmt.Printf("> Player %s got an impact rating of %.5f in round %d\n", bestRoundPlayer, bestRoundRating, bestRound)
 		fmt.Printf("> Player %s got an impact rating of %.5f in round %d\n\n", worstRoundPlayer, worstRoundRating, worstRound)
 	}
