@@ -18,7 +18,7 @@ Impact Rating uses a machine learning model trained on a large amount of histori
 
 Two simplified examples of in-game scenarios are shown in the diagram below. Both describe a single CT player getting a triple kill, but they only receive impact rating in one scenario. In the first, the CTs are left in a 5v2 situation in which they are highly favoured to subsequently win the round. In the second, the CTs are forfeiting the round, and not attempting a retake. A triple kill at this point **does not alter the CT team's chance of winning the round**.
 
-![](https://i.imgur.com/ZfJVFWA.png)
+![](https://i.imgur.com/KSoGyES.png)
 
 Internally, the state of a round at any given time is captured by the following features:
 
@@ -34,7 +34,7 @@ Internally, the state of a round at any given time is captured by the following 
 
 Inputs for each of these features are passed to the machine learning model, which returns a single floating-point value between `0.0` and `1.0` as the round winner prediction. The value can be directly interpreted as the probability that the round will be won by the T side. 
 
-For example, a value of `0.34` represents a **34% chance** of a **T side** round win, and a **66% chance** of a **CT side** round win.
+For example, a returned value of `0.34` represents a predicted **34% chance** of a **T side** round win, and a **66% chance** of a **CT side** round win.
 
 ## Download
 
@@ -42,7 +42,7 @@ For example, a value of `0.34` represents a **34% chance** of a **T side** round
 
 ## Built With
 
-- [demoinfocs-golang](https://github.com/markus-wa/demoinfocs-golang) - used to parse CS:GO demo files.
-- [cobra](github.com/spf13/cobra) - used to build the command line interface.
-- [pb (v3)](github.com/cheggaaa/pb/v3) - used for progress visualisation.
-- [LightGBM](https://lightgbm.readthedocs.io/en/latest/) - used for model training/round outcome prediction.
+- [demoinfocs-golang](https://github.com/markus-wa/demoinfocs-golang) - used to parse CS:GO demo files
+- [cobra](github.com/spf13/cobra) - used to build the command line interface
+- [pb (v3)](github.com/cheggaaa/pb/v3) - used for progress visualisation
+- [LightGBM](https://lightgbm.readthedocs.io/en/latest/) - used for model training/round outcome prediction
