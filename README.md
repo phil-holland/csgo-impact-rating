@@ -1,6 +1,7 @@
 <p align="center">
-<h1>CS:GO Impact Rating</h1>
-<i>A probabilistic rating system for Counter Strike: Global Offensive, powered by machine learning</i>
+  <img src="https://i.imgur.com/78yK1sr.png" />
+  <br>
+  <i>A probabilistic rating system for Counter Strike: Global Offensive, powered by machine learning</i>
 </p>
 
 ---
