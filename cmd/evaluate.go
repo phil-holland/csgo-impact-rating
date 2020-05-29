@@ -359,7 +359,7 @@ func evaluate(path string) {
 			roundHurtRatings[change.Player] += change.Change
 		}
 
-		if idx == len(ratingOutput.RatingChanges)-1 || ratingOutput.RatingChanges[idx+1].Round > currentRound+1 {
+		if idx == len(ratingOutput.RatingChanges)-1 || ratingOutput.RatingChanges[idx+1].Round >= currentRound+1 {
 			if !quiet {
 				fmt.Printf("\n[ Round %d ]\n", currentRound)
 			}
@@ -388,7 +388,7 @@ func evaluate(path string) {
 					tdr := 100.0 * roundTradeDamageRatings[id]
 					der := 100.0 * roundDefuseRatings[id]
 					hr := 100.0 * roundHurtRatings[id]
-					fmt.Printf("> Player %s got an Impact Rating of: [%.5f] -> (dmg: %.5f, flash assists: %.5f, trade dmg: %.5f, defuses: %.5f, hurt: %.5f)\n",
+					fmt.Printf("> Player \"%s\" got an Impact Rating of: [%.3f] (dmg: %.3f, flash: %.3f, trd: %.3f, def: %.3f, hurt: %.3f)\n",
 						name, r, dr, far, tdr, der, hr)
 					if r > bestRoundRating {
 						bestRoundRating = r
@@ -408,7 +408,7 @@ func evaluate(path string) {
 				roundDefuseRatings[id] = 0.0
 				roundHurtRatings[id] = 0.0
 			}
-			currentRound = change.Round
+			currentRound++
 		}
 	}
 
@@ -424,13 +424,13 @@ func evaluate(path string) {
 			avgDefuseRating := 100.0 * defuseRatings[id] / float64(roundsPlayed)
 			avgHurtRating := 100.0 * hurtRatings[id] / float64(roundsPlayed)
 
-			fmt.Printf("> Player %s got an average Impact Rating of: [%.5f] -> (dmg: %.5f, flash assists: %.5f, trade dmg: %.5f, defuses: %.5f, hurt: %.5f)\n",
+			fmt.Printf("> Player \"%s\" got an average Impact Rating of: [%.3f] (dmg: %.3f, flash: %.3f, trd: %.3f, def: %.3f, hurt: %.3f)\n",
 				name, avgRating, avgDamageRating, avgFlashAssistRating, avgTradeDamageRating, avgDefuseRating, avgHurtRating)
 		}
 
 		fmt.Printf("\n[ Big Rounds ]\n")
-		fmt.Printf("> Player %s got an Impact Rating of %.5f in round %d\n", bestRoundPlayer, bestRoundRating, bestRound)
-		fmt.Printf("> Player %s got an Impact Rating of %.5f in round %d\n\n", worstRoundPlayer, worstRoundRating, worstRound)
+		fmt.Printf("> Player %s got an Impact Rating of [%.3f] in round %d\n", bestRoundPlayer, bestRoundRating, bestRound)
+		fmt.Printf("> Player %s got an Impact Rating of [%.3f] in round %d\n\n", worstRoundPlayer, worstRoundRating, worstRound)
 	}
 
 	for k, v := range names {
