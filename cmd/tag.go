@@ -253,6 +253,7 @@ func tag(demoPath string) {
 				lastDamageTick[e.Attacker.SteamID64][e.Player.SteamID64] = p.CurrentFrame()
 			}
 
+			// TODO: Limit this to reject "team trade damage"
 			if _, ok := lastDamageTick[e.Player.SteamID64]; ok {
 				for id, t := range lastDamageTick[e.Player.SteamID64] {
 					if float64(p.CurrentFrame()-t)*p.TickTime().Seconds() <= 2.0 && e.Attacker.SteamID64 != id {
