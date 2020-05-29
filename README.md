@@ -15,7 +15,7 @@
 
 ## How it Works
 
-Impact Rating uses a machine learning model trained on a large amount of historical data to **predict the probable winner** of a given CS:GO round, based on the current state of the round. A **player's rating** is then calculated as the amount by which their actions shift the likelihood of their team winning the round. Therefore, **players are rewarded purely for making plays that improve their team's chance of winning the current round**. Conversely, negative rating is given when a player's actions reduce their team's chance of winning the round.
+Impact Rating uses a machine learning model trained on a large amount of historical data to **predict the probable winner** of a given CS:GO round, based on the current state of the round. A **player's Impact Rating** is then calculated as the amount by which their actions shift the likelihood of their team winning the round. Therefore, **players are rewarded purely for making plays that improve their team's chance of winning the current round**. Conversely, negative Impact Rating is given when a player's actions reduce their team's chance of winning the round.
 
 > Two simplified examples of in-game scenarios are shown in the diagram below. Both describe a single CT player getting a triple kill, but they only receive impact rating in one scenario. In the first, the CTs are left in a 5v2 situation in which they are highly favoured to subsequently win the round. In the second, the remaining CTs are forfeiting the round, not attempting a late retake. A triple kill at this point **does not alter the CT team's chance of winning the round**.
 >
@@ -54,11 +54,13 @@ This concept is applied to **every change in a round's state** from the end of f
 
 ## Download
 
-> <u>**Important:**</u> CS:GO Impact Rating requires [LightGBM](https://github.com/Microsoft/LightGBM) to be installed on the system. Download the latest binary release from [github.com/Microsoft/LightGBM/releases](https://github.com/Microsoft/LightGBM/releases) and either make sure the executable is added to the system path, or placed in the same directory as the csgo-impact-rating executable.
+> **Important:** CS:GO Impact Rating requires [LightGBM](https://github.com/Microsoft/LightGBM) to be installed on the system. Download the latest binary release from [github.com/Microsoft/LightGBM/releases](https://github.com/Microsoft/LightGBM/releases) and either make sure the executable is added to the system path, or placed in the same directory as the csgo-impact-rating executable.
 
-The latest csgo-impact-rating executable can be downloaded from this project's release page here: [github.com/Phil-Holland/csgo-impact-rating/releases](https://github.com/Phil-Holland/csgo-impact-rating/releases).
+The latest csgo-impact-rating executable can be downloaded from this project's release page here: [github.com/Phil-Holland/csgo-impact-rating/releases](https://github.com/Phil-Holland/csgo-impact-rating/releases). This can be placed anywhere on the system - add the parent directory to the system path to access the executable from any location.
 
 ## Usage
+
+*TODO*
 
 ## Built With
 

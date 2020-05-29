@@ -76,11 +76,22 @@ type RatingBreakdown struct {
 	HurtRating        float64 `json:"hurtRating"`
 }
 
-type RatingPlayer struct {
-	SteamID         uint64          `json:"steamID"`
-	Name            string          `json:"name"`
+type OverallRating struct {
+	AverageRating   float64         `json:"averageRating"`
+	RatingBreakdown RatingBreakdown `json:"ratingBreakdown"`
+}
+
+type RoundRating struct {
+	Round           int             `json:"round"`
 	TotalRating     float64         `json:"totalRating"`
 	RatingBreakdown RatingBreakdown `json:"ratingBreakdown"`
+}
+
+type PlayerRating struct {
+	SteamID       uint64        `json:"steamID"`
+	Name          string        `json:"name"`
+	OverallRating OverallRating `json:"overallRating"`
+	RoundRatings  []RoundRating `json:"roundRatings"`
 }
 
 type RatingChange struct {
@@ -99,7 +110,7 @@ type RoundOutcomePrediction struct {
 
 type Rating struct {
 	RoundsPlayed            int                      `json:"roundsPlayed"`
-	Players                 []RatingPlayer           `json:"players"`
+	Players                 []PlayerRating           `json:"players"`
 	RatingChanges           []RatingChange           `json:"ratingChanges"`
 	RoundOutcomePredictions []RoundOutcomePrediction `json:"roundOutcomePredictions"`
 }

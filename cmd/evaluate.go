@@ -309,82 +309,86 @@ func evaluate(path string) {
 		lastPred = pred
 	}
 
-	for k, v := range names {
-		ratingOutput.Players = append(ratingOutput.Players, internal.RatingPlayer{
-			SteamID:     k,
-			Name:        v,
-			TotalRating: ratings[k],
-			RatingBreakdown: internal.RatingBreakdown{
-				DamageRating:      damageRatings[k],
-				FlashAssistRating: flashAssistRatings[k],
-				TradeDamageRating: tradeDamageRatings[k],
-				DefuseRating:      defuseRatings[k],
-				HurtRating:        hurtRatings[k],
-			},
-		})
-	}
-
 	ratingOutput.RoundsPlayed = roundsPlayed
 
-	// print out reports
-	if !quiet {
-		playerNames := make([]string, 0)
-		for k := range ids {
-			playerNames = append(playerNames, k)
+	playerNames := make([]string, 0)
+	for k := range ids {
+		playerNames = append(playerNames, k)
+	}
+	sort.Strings(playerNames)
+
+	currentRound := 1
+	roundRatings := make(map[uint64]float64)
+	roundDamageRatings := make(map[uint64]float64)
+	roundFlashAssistRatings := make(map[uint64]float64)
+	roundTradeDamageRatings := make(map[uint64]float64)
+	roundDefuseRatings := make(map[uint64]float64)
+	roundHurtRatings := make(map[uint64]float64)
+	playerRoundRatings := make(map[uint64]([]internal.RoundRating))
+
+	for k := range names {
+		roundRatings[k] = 0.0
+
+		roundDamageRatings[k] = 0.0
+		roundFlashAssistRatings[k] = 0.0
+		roundTradeDamageRatings[k] = 0.0
+		roundDefuseRatings[k] = 0.0
+		roundHurtRatings[k] = 0.0
+	}
+
+	bestRoundRating := 0.0
+	bestRoundPlayer := ""
+	bestRound := 0
+
+	worstRoundRating := 0.0
+	worstRoundPlayer := ""
+	worstRound := 0
+
+	for idx, change := range ratingOutput.RatingChanges {
+		roundRatings[change.Player] += change.Change
+		switch change.Action {
+		case internal.ActionDamage:
+			roundDamageRatings[change.Player] += change.Change
+		case internal.ActionFlashAssist:
+			roundFlashAssistRatings[change.Player] += change.Change
+		case internal.ActionTradeDamage:
+			roundTradeDamageRatings[change.Player] += change.Change
+		case internal.ActionDefuse:
+			roundDefuseRatings[change.Player] += change.Change
+		case internal.ActionHurt:
+			roundHurtRatings[change.Player] += change.Change
 		}
-		sort.Strings(playerNames)
 
-		currentRound := 1
-		roundRatings := make(map[uint64]float64)
-		roundDamageRatings := make(map[uint64]float64)
-		roundFlashAssistRatings := make(map[uint64]float64)
-		roundTradeDamageRatings := make(map[uint64]float64)
-		roundDefuseRatings := make(map[uint64]float64)
-		roundHurtRatings := make(map[uint64]float64)
-		for k := range names {
-			roundRatings[k] = 0.0
-
-			roundDamageRatings[k] = 0.0
-			roundFlashAssistRatings[k] = 0.0
-			roundTradeDamageRatings[k] = 0.0
-			roundDefuseRatings[k] = 0.0
-			roundHurtRatings[k] = 0.0
-		}
-
-		bestRoundRating := 0.0
-		bestRoundPlayer := ""
-		bestRound := 0
-
-		worstRoundRating := 0.0
-		worstRoundPlayer := ""
-		worstRound := 0
-
-		for idx, change := range ratingOutput.RatingChanges {
-			roundRatings[change.Player] += change.Change
-			switch change.Action {
-			case internal.ActionDamage:
-				roundDamageRatings[change.Player] += change.Change
-			case internal.ActionFlashAssist:
-				roundFlashAssistRatings[change.Player] += change.Change
-			case internal.ActionTradeDamage:
-				roundTradeDamageRatings[change.Player] += change.Change
-			case internal.ActionDefuse:
-				roundDefuseRatings[change.Player] += change.Change
-			case internal.ActionHurt:
-				roundHurtRatings[change.Player] += change.Change
-			}
-
-			if idx == len(ratingOutput.RatingChanges)-1 || ratingOutput.RatingChanges[idx+1].Round > currentRound+1 {
+		if idx == len(ratingOutput.RatingChanges)-1 || ratingOutput.RatingChanges[idx+1].Round > currentRound+1 {
+			if !quiet {
 				fmt.Printf("\n[ Round %d ]\n", currentRound)
-				for _, name := range playerNames {
-					id := ids[name]
+			}
+			for _, name := range playerNames {
+				id := ids[name]
+
+				if _, ok := playerRoundRatings[id]; !ok {
+					playerRoundRatings[id] = make([]internal.RoundRating, 0)
+				}
+				playerRoundRatings[id] = append(playerRoundRatings[id], internal.RoundRating{
+					Round:       currentRound,
+					TotalRating: roundRatings[id],
+					RatingBreakdown: internal.RatingBreakdown{
+						DamageRating:      roundDamageRatings[id],
+						FlashAssistRating: roundFlashAssistRatings[id],
+						TradeDamageRating: roundTradeDamageRatings[id],
+						DefuseRating:      roundDefuseRatings[id],
+						HurtRating:        roundHurtRatings[id],
+					},
+				})
+
+				if !quiet {
 					r := 100.0 * roundRatings[id]
 					dr := 100.0 * roundDamageRatings[id]
 					far := 100.0 * roundFlashAssistRatings[id]
 					tdr := 100.0 * roundTradeDamageRatings[id]
 					der := 100.0 * roundDefuseRatings[id]
 					hr := 100.0 * roundHurtRatings[id]
-					fmt.Printf("> Player %s got an impact rating of: [%.5f] -> (dmg: %.5f, flash assists: %.5f, trade dmg: %.5f, defuses: %.5f, hurt: %.5f)\n",
+					fmt.Printf("> Player %s got an Impact Rating of: [%.5f] -> (dmg: %.5f, flash assists: %.5f, trade dmg: %.5f, defuses: %.5f, hurt: %.5f)\n",
 						name, r, dr, far, tdr, der, hr)
 					if r > bestRoundRating {
 						bestRoundRating = r
@@ -396,17 +400,19 @@ func evaluate(path string) {
 						worstRoundPlayer = name
 						worstRound = currentRound
 					}
-					roundRatings[id] = 0.0
-					roundDamageRatings[id] = 0.0
-					roundFlashAssistRatings[id] = 0.0
-					roundTradeDamageRatings[id] = 0.0
-					roundDefuseRatings[id] = 0.0
-					roundHurtRatings[id] = 0.0
 				}
-				currentRound = change.Round
+				roundRatings[id] = 0.0
+				roundDamageRatings[id] = 0.0
+				roundFlashAssistRatings[id] = 0.0
+				roundTradeDamageRatings[id] = 0.0
+				roundDefuseRatings[id] = 0.0
+				roundHurtRatings[id] = 0.0
 			}
+			currentRound = change.Round
 		}
+	}
 
+	if !quiet {
 		fmt.Printf("\n[ Overall ]\n")
 		for _, name := range playerNames {
 			id := ids[name]
@@ -418,13 +424,31 @@ func evaluate(path string) {
 			avgDefuseRating := 100.0 * defuseRatings[id] / float64(roundsPlayed)
 			avgHurtRating := 100.0 * hurtRatings[id] / float64(roundsPlayed)
 
-			fmt.Printf("> Player %s got an average impact rating of: [%.5f] -> (dmg: %.5f, flash assists: %.5f, trade dmg: %.5f, defuses: %.5f, hurt: %.5f)\n",
+			fmt.Printf("> Player %s got an average Impact Rating of: [%.5f] -> (dmg: %.5f, flash assists: %.5f, trade dmg: %.5f, defuses: %.5f, hurt: %.5f)\n",
 				name, avgRating, avgDamageRating, avgFlashAssistRating, avgTradeDamageRating, avgDefuseRating, avgHurtRating)
 		}
 
 		fmt.Printf("\n[ Big Rounds ]\n")
-		fmt.Printf("> Player %s got an impact rating of %.5f in round %d\n", bestRoundPlayer, bestRoundRating, bestRound)
-		fmt.Printf("> Player %s got an impact rating of %.5f in round %d\n\n", worstRoundPlayer, worstRoundRating, worstRound)
+		fmt.Printf("> Player %s got an Impact Rating of %.5f in round %d\n", bestRoundPlayer, bestRoundRating, bestRound)
+		fmt.Printf("> Player %s got an Impact Rating of %.5f in round %d\n\n", worstRoundPlayer, worstRoundRating, worstRound)
+	}
+
+	for k, v := range names {
+		ratingOutput.Players = append(ratingOutput.Players, internal.PlayerRating{
+			SteamID: k,
+			Name:    v,
+			OverallRating: internal.OverallRating{
+				AverageRating: ratings[k] / float64(roundsPlayed),
+				RatingBreakdown: internal.RatingBreakdown{
+					DamageRating:      damageRatings[k] / float64(roundsPlayed),
+					FlashAssistRating: flashAssistRatings[k] / float64(roundsPlayed),
+					TradeDamageRating: tradeDamageRatings[k] / float64(roundsPlayed),
+					DefuseRating:      defuseRatings[k] / float64(roundsPlayed),
+					HurtRating:        hurtRatings[k] / float64(roundsPlayed),
+				},
+			},
+			RoundRatings: playerRoundRatings[k],
+		})
 	}
 
 	// write final output json
