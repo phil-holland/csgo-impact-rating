@@ -10,6 +10,7 @@
 
 <p align="center">
   <img src="https://i.imgur.com/EBbyDLv.png" />
+  <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#download'>Built With</a>
 </p>
 
 ## How it Works
@@ -35,6 +36,10 @@ Internally, the state of a round at any given time is captured by the following 
 Inputs for each of these features are passed to the machine learning model, which returns a single floating-point value between `0.0` and `1.0` as the round winner prediction. The value can be directly interpreted as the probability that the round will be won by the T side. 
 
 For example, a returned value of `0.34` represents a predicted **34% chance** of a **T side** round win, and a **66% chance** of a **CT side** round win.
+
+## Prediction Model
+
+*TODO*
 
 ## Download
 
