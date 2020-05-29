@@ -10,7 +10,7 @@
 
 <p align="center">
   <img src="https://i.imgur.com/EBbyDLv.png" />
-  <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#download'>Built With</a>
+  <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#usage'>Usage</a> • <a href='#download'>Built With</a>
 </p>
 
 ## How it Works
@@ -54,7 +54,11 @@ This concept is applied to **every change in a round's state** from the end of f
 
 ## Download
 
-*TODO*
+> <u>**Important:**</u> CS:GO Impact Rating requires [LightGBM](https://github.com/Microsoft/LightGBM) to be installed on the system. Download the latest binary release from [github.com/Microsoft/LightGBM/releases](https://github.com/Microsoft/LightGBM/releases) and either make sure the executable is added to the system path, or placed in the same directory as the csgo-impact-rating executable.
+
+The latest csgo-impact-rating executable can be downloaded from this project's release page here: [github.com/Phil-Holland/csgo-impact-rating/releases](https://github.com/Phil-Holland/csgo-impact-rating/releases).
+
+## Usage
 
 ## Built With
 
