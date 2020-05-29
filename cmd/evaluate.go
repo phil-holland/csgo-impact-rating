@@ -359,8 +359,22 @@ func evaluate(path string) {
 		worstRoundPlayer := ""
 		worstRound := 0
 
-		for _, change := range ratingOutput.RatingChanges {
-			if change.Round > currentRound {
+		for idx, change := range ratingOutput.RatingChanges {
+			roundRatings[change.Player] += change.Change
+			switch change.Action {
+			case internal.ActionDamage:
+				roundDamageRatings[change.Player] += change.Change
+			case internal.ActionFlashAssist:
+				roundFlashAssistRatings[change.Player] += change.Change
+			case internal.ActionTradeDamage:
+				roundTradeDamageRatings[change.Player] += change.Change
+			case internal.ActionDefuse:
+				roundDefuseRatings[change.Player] += change.Change
+			case internal.ActionHurt:
+				roundHurtRatings[change.Player] += change.Change
+			}
+
+			if idx == len(ratingOutput.RatingChanges)-1 || ratingOutput.RatingChanges[idx+1].Round > currentRound+1 {
 				fmt.Printf("\n[ Round %d ]\n", currentRound)
 				for _, name := range playerNames {
 					id := ids[name]
@@ -390,19 +404,6 @@ func evaluate(path string) {
 					roundHurtRatings[id] = 0.0
 				}
 				currentRound = change.Round
-			}
-			roundRatings[change.Player] += change.Change
-			switch change.Action {
-			case internal.ActionDamage:
-				roundDamageRatings[change.Player] += change.Change
-			case internal.ActionFlashAssist:
-				roundFlashAssistRatings[change.Player] += change.Change
-			case internal.ActionTradeDamage:
-				roundTradeDamageRatings[change.Player] += change.Change
-			case internal.ActionDefuse:
-				roundDefuseRatings[change.Player] += change.Change
-			case internal.ActionHurt:
-				roundHurtRatings[change.Player] += change.Change
 			}
 		}
 

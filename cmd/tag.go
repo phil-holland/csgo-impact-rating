@@ -255,7 +255,7 @@ func tag(demoPath string) {
 
 			if _, ok := lastDamageTick[e.Player.SteamID64]; ok {
 				for id, t := range lastDamageTick[e.Player.SteamID64] {
-					if float64(p.CurrentFrame()-t)*p.TickTime().Seconds() <= 2.0 {
+					if float64(p.CurrentFrame()-t)*p.TickTime().Seconds() <= 2.0 && e.Attacker.SteamID64 != id {
 						tick.Tags = append(tick.Tags, internal.Tag{
 							Action: internal.ActionTradeDamage,
 							Player: id,
