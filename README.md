@@ -50,7 +50,7 @@ This concept is applied to **every change in a round's state** from the end of f
 
 ## Prediction Model
 
-Whilst the concept behind Impact Rating can in theory be implemented using any binary classification model, the code here has been written to target the [LightGBM framework](https://lightgbm.readthedocs.io/en/latest/). This is a framework used for gradient boosting decision trees (GBDT), and has been shown to perform [very well](https://lightgbm.readthedocs.io/en/latest/Experiments.html#comparison-experiment) in binary classification problems. It has also been chosen for its lightweight nature, and ease of installation.
+Whilst the concept behind Impact Rating can in theory be implemented using any binary classification model, the code here has been written to target the [LightGBM framework](https://github.com/Microsoft/LightGBM). This is a framework used for gradient boosting decision trees (GBDT), and has been shown to perform [very well](https://lightgbm.readthedocs.io/en/latest/Experiments.html#comparison-experiment) in binary classification problems. It has also been chosen for its lightweight nature, and ease of installation.
 
 ## Download
 
@@ -66,5 +66,5 @@ The latest Impact Rating executable and LightGBM model file (`LightGBM_model.txt
 
 - [demoinfocs-golang](https://github.com/markus-wa/demoinfocs-golang) - used to parse CS:GO demo files
 - [cobra](https://github.com/spf13/cobra) - used to build the command line interface
-- [pb (v3)](https://github.com/cheggaaa/pb/v3) - used for progress visualisation
-- [LightGBM](https://lightgbm.readthedocs.io/en/latest/) - used for model training/round outcome prediction
+- [pb (v3)](https://github.com/cheggaaa/pb) - used for progress visualisation
+- [LightGBM](https://github.com/Microsoft/LightGBM) - used for model training/round outcome prediction
