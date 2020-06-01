@@ -1,4 +1,4 @@
-package cmd
+package internal
 
 import (
 	"encoding/json"
@@ -8,44 +8,15 @@ import (
 
 	"github.com/cheggaaa/pb/v3"
 	dem "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs"
+	common "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs/common"
 	events "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs/events"
-	"github.com/phil-holland/csgo-impact-rating/internal"
-	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(tagCmd)
-}
-
-var tagCmd = &cobra.Command{
-	Use:   "tag [.dem file]",
-	Short: "Creates a player-tagged game state file for the input demo file",
-	Long:  "...",
-	Run: func(cmd *cobra.Command, args []string) {
-		// process the file argument
-		if len(args) == 0 {
-			panic("demo file not supplied.")
-		}
-		if len(args) > 1 {
-			panic("Only one demo file can be supplied.")
-		}
-		demoPath := args[0]
-
-		_, err := os.Stat(demoPath)
-		if os.IsNotExist(err) {
-			panic(fmt.Sprintf("ERROR: '%s' is not a file.\n", demoPath))
-		}
-
-		// start parsing the demo file
-		tag(demoPath)
-	},
-}
-
-func tag(demoPath string) {
-	var output internal.Demo
+func TagDemo(demoPath string) string {
+	var output Demo
 	var roundLive bool
-	var roundTimes internal.RoundTimes
-	var tickBuffer []internal.Tick
+	var roundTimes RoundTimes
+	var tickBuffer []Tick
 	var lastKillTick int
 	var lastTScore int = -1
 	var lastCtScore int = -1
@@ -104,8 +75,8 @@ func tag(demoPath string) {
 		roundLive = true
 
 		tick := createTick(&p)
-		tick.Type = internal.TickTypeRoundStart
-		tick.GameState = internal.GetGameState(p, roundTimes, nil)
+		tick.Type = TickTypeRoundStart
+		tick.GameState = GetGameState(&p, roundTimes, nil)
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -122,10 +93,10 @@ func tag(demoPath string) {
 			var winningTeam uint
 			if p.GameState().Team(e.Winner) == p.GameState().TeamCounterTerrorists() {
 				winningTeam = 0
-				matchFinished = internal.HasMatchFinished(lastCtScore+1, lastTScore)
+				matchFinished = HasMatchFinished(lastCtScore+1, lastTScore, 15)
 			} else if p.GameState().Team(e.Winner) == p.GameState().TeamTerrorists() {
 				winningTeam = 1
-				matchFinished = internal.HasMatchFinished(lastCtScore, lastTScore+1)
+				matchFinished = HasMatchFinished(lastCtScore, lastTScore+1, 15)
 			}
 
 			for idx := range tickBuffer {
@@ -141,14 +112,14 @@ func tag(demoPath string) {
 			return
 		}
 
-		if internal.IsLive(&p) {
+		if IsLive(&p) {
 			roundTimes.PlantTick = p.GameState().IngameTick()
 		}
 
 		tick := createTick(&p)
-		tick.Type = internal.TickTypeBombPlant
+		tick.Type = TickTypeBombPlant
 
-		tick.GameState = internal.GetGameState(p, roundTimes, nil)
+		tick.GameState = GetGameState(&p, roundTimes, nil)
 
 		tickBuffer = append(tickBuffer, tick)
 	})
@@ -158,14 +129,20 @@ func tag(demoPath string) {
 			return
 		}
 
-		if internal.IsLive(&p) {
+		if IsLive(&p) {
+			// create two ticks, one pre defuse before the actual defuse
+			preTick := createTick(&p)
+			preTick.GameState = GetGameState(&p, roundTimes, nil)
+			preTick.Type = TickTypePreBombDefuse
+			tickBuffer = append(tickBuffer, preTick)
+
 			roundTimes.DefuseTick = p.GameState().IngameTick()
 
 			tick := createTick(&p)
-			tick.GameState = internal.GetGameState(p, roundTimes, nil)
-			tick.Type = internal.TickTypeBombDefuse
-			tick.Tags = append(tick.Tags, internal.Tag{
-				Action: internal.ActionDefuse,
+			tick.GameState = GetGameState(&p, roundTimes, nil)
+			tick.Type = TickTypeBombDefuse
+			tick.Tags = append(tick.Tags, Tag{
+				Action: ActionDefuse,
 				Player: e.Player.SteamID64,
 			})
 			tickBuffer = append(tickBuffer, tick)
@@ -177,11 +154,11 @@ func tag(demoPath string) {
 			return
 		}
 
-		if internal.IsLive(&p) && roundLive && e.Weapon.String() != "C4" {
+		if IsLive(&p) && roundLive && e.Weapon.String() != "C4" {
 			tick := createTick(&p)
 
-			tick.GameState = internal.GetGameState(p, roundTimes, nil)
-			tick.Type = internal.TickTypeItemPickup
+			tick.GameState = GetGameState(&p, roundTimes, nil)
+			tick.Type = TickTypeItemPickup
 
 			tickBuffer = append(tickBuffer, tick)
 		}
@@ -192,11 +169,11 @@ func tag(demoPath string) {
 			return
 		}
 
-		if internal.IsLive(&p) && roundLive && p.CurrentFrame() != lastKillTick && e.Weapon.String() != "C4" {
+		if IsLive(&p) && roundLive && p.CurrentFrame() != lastKillTick && e.Weapon.String() != "C4" {
 			tick := createTick(&p)
 
-			tick.GameState = internal.GetGameState(p, roundTimes, nil)
-			tick.Type = internal.TickTypeItemDrop
+			tick.GameState = GetGameState(&p, roundTimes, nil)
+			tick.Type = TickTypeItemDrop
 
 			tickBuffer = append(tickBuffer, tick)
 		}
@@ -218,29 +195,29 @@ func tag(demoPath string) {
 			return
 		}
 
-		if internal.IsLive(&p) && roundLive {
+		if IsLive(&p) && roundLive {
 			// create the pre-damage tick
 			pretick := createTick(&p)
-			pretick.GameState = internal.GetGameState(p, roundTimes, nil)
-			pretick.Type = internal.TickTypePreDamage
+			pretick.GameState = GetGameState(&p, roundTimes, nil)
+			pretick.Type = TickTypePreDamage
 			tickBuffer = append(tickBuffer, pretick)
 
 			tick := createTick(&p)
-			tick.GameState = internal.GetGameState(p, roundTimes, &e)
-			tick.Type = internal.TickTypeDamage
+			tick.GameState = GetGameState(&p, roundTimes, &e)
+			tick.Type = TickTypeDamage
 
 			// player damaging
 			if e.Attacker != nil {
-				tick.Tags = append(tick.Tags, internal.Tag{
-					Action: internal.ActionDamage,
+				tick.Tags = append(tick.Tags, Tag{
+					Action: ActionDamage,
 					Player: e.Attacker.SteamID64,
 				})
 			}
 
 			if e.Player.FlashDurationTime() >= 1.0 {
 				if val, ok := lastFlashedPlayer[e.Player.SteamID64]; ok {
-					tick.Tags = append(tick.Tags, internal.Tag{
-						Action: internal.ActionFlashAssist,
+					tick.Tags = append(tick.Tags, Tag{
+						Action: ActionFlashAssist,
 						Player: val,
 					})
 				}
@@ -259,16 +236,16 @@ func tag(demoPath string) {
 			if _, ok := lastDamageTick[e.Player.SteamID64]; ok {
 				for id, t := range lastDamageTick[e.Player.SteamID64] {
 					if float64(p.CurrentFrame()-t)*p.TickTime().Seconds() <= 2.0 && e.Attacker.SteamID64 != id {
-						tick.Tags = append(tick.Tags, internal.Tag{
-							Action: internal.ActionTradeDamage,
+						tick.Tags = append(tick.Tags, Tag{
+							Action: ActionTradeDamage,
 							Player: id,
 						})
 					}
 				}
 			}
 
-			tick.Tags = append(tick.Tags, internal.Tag{
-				Action: internal.ActionHurt,
+			tick.Tags = append(tick.Tags, Tag{
+				Action: ActionHurt,
 				Player: e.Player.SteamID64,
 			})
 			tickBuffer = append(tickBuffer, tick)
@@ -292,10 +269,12 @@ func tag(demoPath string) {
 
 	bar.SetCurrent(100)
 	bar.Finish()
+
+	return demoPath + ".tagged.json"
 }
 
-func createTick(p *dem.Parser) internal.Tick {
-	var tick internal.Tick
+func createTick(p *dem.Parser) Tick {
+	var tick Tick
 
 	tick.ScoreCT = (*p).GameState().TeamCounterTerrorists().Score()
 	tick.ScoreT = (*p).GameState().TeamTerrorists().Score()
@@ -316,7 +295,7 @@ func createTick(p *dem.Parser) internal.Tick {
 		teamID := (*p).GameState().Team(player.Team).ID()
 
 		tick.Players = append(tick.Players,
-			internal.Player{SteamID: steamID, Name: name, TeamID: teamID})
+			Player{SteamID: steamID, Name: name, TeamID: teamID})
 	}
 
 	tick.Tick = (*p).CurrentFrame()
@@ -324,7 +303,7 @@ func createTick(p *dem.Parser) internal.Tick {
 	return tick
 }
 
-func writeOutput(output *internal.Demo, outputPath string) {
+func writeOutput(output *Demo, outputPath string) {
 	outputMarshalled, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
 		panic(err)
@@ -340,4 +319,111 @@ func writeOutput(output *internal.Demo, outputPath string) {
 		panic(err)
 	}
 
+}
+
+// IsLive returns true if the parser is currently at a point where the gamestate
+// should be saved
+func IsLive(p *dem.Parser) bool {
+	if !(*p).GameState().IsMatchStarted() {
+		return false
+	}
+
+	if (*p).GameState().IsWarmupPeriod() {
+		return false
+	}
+
+	if !((*p).GameState().GamePhase() == common.GamePhaseStartGamePhase ||
+		(*p).GameState().GamePhase() == common.GamePhaseTeamSideSwitch) {
+		return false
+	}
+
+	return true
+}
+
+// GetGameState serialises the current state of the round using only the features we care about
+func GetGameState(p *dem.Parser, roundTimes RoundTimes, hurtEvent *events.PlayerHurt) GameState {
+	var state GameState
+
+	state.AliveCT = 0
+	state.MeanHealthCT = 0
+	for _, ct := range (*p).GameState().TeamCounterTerrorists().Members() {
+		health := ct.Health()
+
+		if hurtEvent != nil {
+			if ct.SteamID64 == hurtEvent.Player.SteamID64 {
+				health -= hurtEvent.HealthDamage
+			}
+		}
+
+		if health > 0 {
+			state.AliveCT++
+			state.MeanHealthCT += float64(health)
+		}
+	}
+	if state.AliveCT > 0 {
+		state.MeanHealthCT /= float64(state.AliveCT)
+	}
+
+	state.AliveT = 0
+	state.MeanHealthT = 0
+	for _, t := range (*p).GameState().TeamTerrorists().Members() {
+		health := t.Health()
+
+		if hurtEvent != nil {
+			if t.SteamID64 == hurtEvent.Player.SteamID64 {
+				health -= hurtEvent.HealthDamage
+			}
+		}
+
+		if health > 0 {
+			state.AliveT++
+			state.MeanHealthT += float64(health)
+		}
+	}
+	if state.AliveT > 0 {
+		state.MeanHealthT /= float64(state.AliveT)
+	}
+
+	state.MeanValueCT = 0
+	if state.AliveCT > 0 {
+		state.MeanValueCT = float64((*p).GameState().TeamCounterTerrorists().CurrentEquipmentValue()) / float64(state.AliveCT)
+	}
+
+	state.MeanValueT = 0
+	if state.AliveT > 0 {
+		state.MeanValueT = float64((*p).GameState().TeamTerrorists().CurrentEquipmentValue()) / float64(state.AliveT)
+	}
+
+	if roundTimes.PlantTick > 0 {
+		// bomb has been planted
+		state.RoundTime = float64((*p).GameState().IngameTick()-roundTimes.PlantTick) / (*p).TickRate()
+		state.BombPlanted = true
+
+		if roundTimes.DefuseTick > 0 {
+			// bomb has been defused
+			state.BombDefused = true
+		}
+	} else {
+		state.RoundTime = float64((*p).GameState().IngameTick()-roundTimes.StartTick) / (*p).TickRate()
+		state.BombPlanted = false
+	}
+
+	return state
+}
+
+// HasMatchFinished returns true if one of the two teams has won the match (reached (mr+1) rounds or won in overtime)
+func HasMatchFinished(score1 int, score2 int, mr int) bool {
+	if score1 > mr {
+		if (score1-(mr+1))%3 == 0 && score1-score2 > 1 {
+			return true
+		}
+	}
+
+	if score2 > mr {
+		if (score2-(mr+1))%3 == 0 && score2-score1 > 1 {
+			return true
+		}
+	}
+
+	return false
 }

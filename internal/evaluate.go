@@ -1,4 +1,4 @@
-package cmd
+package internal
 
 import (
 	"encoding/json"
@@ -10,43 +10,17 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-
-	"github.com/phil-holland/csgo-impact-rating/internal"
-	"github.com/spf13/cobra"
 )
 
 var modelPath string
 var quiet bool
 
-func init() {
-	evaluateCmd.Flags().StringVarP(&modelPath, "model", "m", "./out/LightGBM_model.txt", "the path to the LightGBM_model.txt file to use")
-	evaluateCmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "whether to suppress rating reports in the console")
-	rootCmd.AddCommand(evaluateCmd)
-}
-
-var evaluateCmd = &cobra.Command{
-	Use:   "evaluate [.tagged.json file]",
-	Short: "Creates an output .eval.json file containing player impact ratings",
-	Long:  "...",
-	Run: func(cmd *cobra.Command, args []string) {
-		// process the file argument
-		if len(args) == 0 {
-			panic("Tagged json file not supplied.")
-		}
-		if len(args) > 1 {
-			panic("Only one json file can be supplied.")
-		}
-		path := args[0]
-		evaluate(path)
-	},
-}
-
-func evaluate(path string) {
+func EvaluateDemo(taggedFilePath string, quiet bool, modelPath string) {
 	// prepare a csv file
-	fmt.Printf("Reading contents of json file: \"%s\"\n", path)
-	jsonRaw, _ := ioutil.ReadFile(path)
+	fmt.Printf("Reading contents of json file: \"%s\"\n", taggedFilePath)
+	jsonRaw, _ := ioutil.ReadFile(taggedFilePath)
 
-	var demo internal.Demo
+	var demo Demo
 	err := json.Unmarshal(jsonRaw, &demo)
 	if err != nil {
 		panic(err.Error())
@@ -60,9 +34,9 @@ func evaluate(path string) {
 	defer os.Remove(file.Name())
 
 	fmt.Printf("Writing csv to temporary file: \"%s\"\n", file.Name())
-	output := internal.CSVHeader + "\n"
+	output := CSVHeader + "\n"
 	for _, tick := range demo.Ticks {
-		csvLine := internal.MakeCSVLine(&tick)
+		csvLine := MakeCSVLine(&tick)
 		output += csvLine + "\n"
 	}
 	file.WriteString(output)
@@ -95,7 +69,7 @@ func evaluate(path string) {
 	}
 	lines := strings.Split(string(results), "\n")
 
-	var ratingOutput internal.Rating
+	var ratingOutput Rating
 
 	ratings := make(map[uint64]float64)
 	damageRatings := make(map[uint64]float64)
@@ -137,8 +111,13 @@ func evaluate(path string) {
 			panic(err.Error())
 		}
 
+		// amend the prediction if the bomb has been defused - certain ct win
+		if tick.GameState.BombDefused {
+			pred = 0.0
+		}
+
 		// append to the round outcome prediction slice
-		ratingOutput.RoundOutcomePredictions = append(ratingOutput.RoundOutcomePredictions, internal.RoundOutcomePrediction{
+		ratingOutput.RoundOutcomePredictions = append(ratingOutput.RoundOutcomePredictions, RoundOutcomePrediction{
 			Tick:              tick.Tick,
 			Round:             roundsPlayed,
 			OutcomePrediction: pred,
@@ -148,20 +127,20 @@ func evaluate(path string) {
 		change := lastPred - pred
 
 		switch tick.Type {
-		case internal.TickTypeDamage:
+		case TickTypeDamage:
 			var flashingPlayer uint64 = 0
 			var damagingPlayer uint64 = 0
 			var hurtingPlayer uint64 = 0
 			var tradedPlayers []uint64
 
 			for _, tag := range tick.Tags {
-				if tag.Action == internal.ActionFlashAssist {
+				if tag.Action == ActionFlashAssist {
 					flashingPlayer = tag.Player
-				} else if tag.Action == internal.ActionDamage {
+				} else if tag.Action == ActionDamage {
 					damagingPlayer = tag.Player
-				} else if tag.Action == internal.ActionHurt {
+				} else if tag.Action == ActionHurt {
 					hurtingPlayer = tag.Player
-				} else if tag.Action == internal.ActionTradeDamage {
+				} else if tag.Action == ActionTradeDamage {
 					tradedPlayers = append(tradedPlayers, tag.Player)
 				}
 			}
@@ -177,22 +156,22 @@ func evaluate(path string) {
 
 			if damagingPlayer != 0 {
 				if teamIds[damagingPlayer] == tick.TeamCT.ID {
-					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
 						Round:  roundsPlayed,
 						Player: damagingPlayer,
 						Change: splitChange,
-						Action: internal.ActionDamage,
+						Action: ActionDamage,
 					})
 					ratings[damagingPlayer] += splitChange
 					damageRatings[damagingPlayer] += splitChange
 				} else if teamIds[damagingPlayer] == tick.TeamT.ID {
-					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
 						Round:  roundsPlayed,
 						Player: damagingPlayer,
 						Change: -splitChange,
-						Action: internal.ActionDamage,
+						Action: ActionDamage,
 					})
 					ratings[damagingPlayer] -= splitChange
 					damageRatings[damagingPlayer] -= splitChange
@@ -201,22 +180,22 @@ func evaluate(path string) {
 
 			if flashingPlayer != 0 {
 				if teamIds[flashingPlayer] == tick.TeamCT.ID {
-					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
 						Round:  roundsPlayed,
 						Player: flashingPlayer,
 						Change: splitChange,
-						Action: internal.ActionFlashAssist,
+						Action: ActionFlashAssist,
 					})
 					ratings[flashingPlayer] += splitChange
 					flashAssistRatings[flashingPlayer] += splitChange
 				} else if teamIds[flashingPlayer] == tick.TeamT.ID {
-					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
 						Round:  roundsPlayed,
 						Player: flashingPlayer,
 						Change: -splitChange,
-						Action: internal.ActionFlashAssist,
+						Action: ActionFlashAssist,
 					})
 					ratings[flashingPlayer] -= splitChange
 					flashAssistRatings[flashingPlayer] -= splitChange
@@ -226,22 +205,22 @@ func evaluate(path string) {
 			if len(tradedPlayers) > 0 {
 				for _, tp := range tradedPlayers {
 					if teamIds[tp] == tick.TeamCT.ID {
-						ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+						ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 							Tick:   tick.Tick,
 							Round:  roundsPlayed,
 							Player: tp,
 							Change: splitChange / float64(len(tradedPlayers)),
-							Action: internal.ActionTradeDamage,
+							Action: ActionTradeDamage,
 						})
 						ratings[tp] += splitChange
 						tradeDamageRatings[tp] += splitChange
 					} else if teamIds[tp] == tick.TeamT.ID {
-						ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+						ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 							Tick:   tick.Tick,
 							Round:  roundsPlayed,
 							Player: tp,
 							Change: -splitChange / float64(len(tradedPlayers)),
-							Action: internal.ActionTradeDamage,
+							Action: ActionTradeDamage,
 						})
 						ratings[tp] -= splitChange
 						tradeDamageRatings[tp] -= splitChange
@@ -251,54 +230,54 @@ func evaluate(path string) {
 
 			if hurtingPlayer != 0 {
 				if teamIds[hurtingPlayer] == tick.TeamCT.ID {
-					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
 						Round:  roundsPlayed,
 						Player: hurtingPlayer,
 						Change: change,
-						Action: internal.ActionHurt,
+						Action: ActionHurt,
 					})
 					ratings[hurtingPlayer] += change
 					hurtRatings[hurtingPlayer] += change
 				} else if teamIds[hurtingPlayer] == tick.TeamT.ID {
-					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
 						Round:  roundsPlayed,
 						Player: hurtingPlayer,
 						Change: -change,
-						Action: internal.ActionHurt,
+						Action: ActionHurt,
 					})
 					ratings[hurtingPlayer] -= change
 					hurtRatings[hurtingPlayer] -= change
 				}
 			}
-		case internal.TickTypeBombDefuse:
+		case TickTypeBombDefuse:
 			var defusingPlayer uint64 = 0
 
 			for _, tag := range tick.Tags {
-				if tag.Action == internal.ActionDefuse {
+				if tag.Action == ActionDefuse {
 					defusingPlayer = tag.Player
 				}
 			}
 
 			if defusingPlayer != 0 {
 				if teamIds[defusingPlayer] == tick.TeamCT.ID {
-					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
 						Round:  roundsPlayed,
 						Player: defusingPlayer,
 						Change: change,
-						Action: internal.ActionDefuse,
+						Action: ActionDefuse,
 					})
 					ratings[defusingPlayer] += change
 					defuseRatings[defusingPlayer] += change
 				} else if teamIds[defusingPlayer] == tick.TeamT.ID {
-					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, internal.RatingChange{
+					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
 						Round:  roundsPlayed,
 						Player: defusingPlayer,
 						Change: -change,
-						Action: internal.ActionDefuse,
+						Action: ActionDefuse,
 					})
 					ratings[defusingPlayer] -= change
 					defuseRatings[defusingPlayer] -= change
@@ -324,7 +303,7 @@ func evaluate(path string) {
 	roundTradeDamageRatings := make(map[uint64]float64)
 	roundDefuseRatings := make(map[uint64]float64)
 	roundHurtRatings := make(map[uint64]float64)
-	playerRoundRatings := make(map[uint64]([]internal.RoundRating))
+	playerRoundRatings := make(map[uint64]([]RoundRating))
 
 	for k := range names {
 		roundRatings[k] = 0.0
@@ -347,15 +326,15 @@ func evaluate(path string) {
 	for idx, change := range ratingOutput.RatingChanges {
 		roundRatings[change.Player] += change.Change
 		switch change.Action {
-		case internal.ActionDamage:
+		case ActionDamage:
 			roundDamageRatings[change.Player] += change.Change
-		case internal.ActionFlashAssist:
+		case ActionFlashAssist:
 			roundFlashAssistRatings[change.Player] += change.Change
-		case internal.ActionTradeDamage:
+		case ActionTradeDamage:
 			roundTradeDamageRatings[change.Player] += change.Change
-		case internal.ActionDefuse:
+		case ActionDefuse:
 			roundDefuseRatings[change.Player] += change.Change
-		case internal.ActionHurt:
+		case ActionHurt:
 			roundHurtRatings[change.Player] += change.Change
 		}
 
@@ -367,12 +346,12 @@ func evaluate(path string) {
 				id := ids[name]
 
 				if _, ok := playerRoundRatings[id]; !ok {
-					playerRoundRatings[id] = make([]internal.RoundRating, 0)
+					playerRoundRatings[id] = make([]RoundRating, 0)
 				}
-				playerRoundRatings[id] = append(playerRoundRatings[id], internal.RoundRating{
+				playerRoundRatings[id] = append(playerRoundRatings[id], RoundRating{
 					Round:       currentRound,
 					TotalRating: roundRatings[id],
-					RatingBreakdown: internal.RatingBreakdown{
+					RatingBreakdown: RatingBreakdown{
 						DamageRating:      roundDamageRatings[id],
 						FlashAssistRating: roundFlashAssistRatings[id],
 						TradeDamageRating: roundTradeDamageRatings[id],
@@ -434,12 +413,12 @@ func evaluate(path string) {
 	}
 
 	for k, v := range names {
-		ratingOutput.Players = append(ratingOutput.Players, internal.PlayerRating{
+		ratingOutput.Players = append(ratingOutput.Players, PlayerRating{
 			SteamID: k,
 			Name:    v,
-			OverallRating: internal.OverallRating{
+			OverallRating: OverallRating{
 				AverageRating: ratings[k] / float64(roundsPlayed),
-				RatingBreakdown: internal.RatingBreakdown{
+				RatingBreakdown: RatingBreakdown{
 					DamageRating:      damageRatings[k] / float64(roundsPlayed),
 					FlashAssistRating: flashAssistRatings[k] / float64(roundsPlayed),
 					TradeDamageRating: tradeDamageRatings[k] / float64(roundsPlayed),
@@ -452,7 +431,7 @@ func evaluate(path string) {
 	}
 
 	// write final output json
-	outputPath := strings.Replace(path, ".tagged.json", ".rating.json", -1)
+	outputPath := strings.Replace(taggedFilePath, ".tagged.json", ".rating.json", -1)
 	fmt.Printf("Writing output JSON to: \"%s\"\n", outputPath)
 	outputMarshalled, err := json.MarshalIndent(ratingOutput, "", "  ")
 	if err != nil {

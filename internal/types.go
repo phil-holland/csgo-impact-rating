@@ -1,9 +1,10 @@
 package internal
 
 const TickTypeRoundStart = "roundStart"
-const TickTypePreDamage = "preDamaged"
+const TickTypePreDamage = "prePlayerDamaged"
 const TickTypeDamage = "playerDamaged"
 const TickTypeBombPlant = "bombPlanted"
+const TickTypePreBombDefuse = "preBombDefused"
 const TickTypeBombDefuse = "bombDefused"
 const TickTypeItemPickup = "itemPickup"
 const TickTypeItemDrop = "itemDrop"
@@ -113,4 +114,10 @@ type Rating struct {
 	Players                 []PlayerRating           `json:"players"`
 	RatingChanges           []RatingChange           `json:"ratingChanges"`
 	RoundOutcomePredictions []RoundOutcomePrediction `json:"roundOutcomePredictions"`
+}
+
+type RoundTimes struct {
+	StartTick  int
+	PlantTick  int
+	DefuseTick int
 }
