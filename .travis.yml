@@ -6,15 +6,10 @@ go:
   - 1.13
   - 1.14
   - release
-  - tip
 
 env:
   global:
     - GO111MODULE=on
-
-matrix:
-  allow_failures:
-    - go: tip
 
 script:
   - go test -v ./...
