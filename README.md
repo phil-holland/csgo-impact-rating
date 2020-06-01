@@ -43,6 +43,7 @@ This concept is applied to **every change in a round's state** from the end of f
 - Trade damage - *if an opponent takes damage very soon after they themself have damaged the player in question*
 - Flash assist damage - *if someone takes damage whilst blinded by a flashbang thrown by the player in question*
 - Defusing the bomb
+- Being "defused on" - *if a T side player is alive when the bomb is defused*
 - Sustaining damage (being hurt)
 
 > It is important to note that some actions may result in negative Impact Rating being "rewarded". For example, sustaining a large amount of damage may shift the round outcome prediction in the favour of your opponents, and therefore you should be punished with the corresponding negative Impact Rating. This also applies to team damage, or if a teammate takes damage after being teamflashed.
@@ -60,7 +61,24 @@ The latest Impact Rating executable and LightGBM model file (`LightGBM_model.txt
 
 ## Usage
 
-*TODO*
+```
+Usage: csgo-impact-rating [OPTION]... [DEMO_FILE]
+
+Tags DEMO_FILE, creating a '.tagged.json' file in the same directory, which is
+subsequently evaluated, producing an Impact Rating report which is written to
+the console and a '.rating.json' file.
+
+  -f, --force                Force the input demo file to be tagged, even if a
+                             .tagged.json file already exists.
+  -s, --eval-skip            Skip the evaluation process, only tag the input
+                             demo file.
+  -m, --eval-model string    The path to the LightGBM_model.txt file to use for
+                             evaluation. (default "./LightGBM_model.txt")
+  -v, --eval-verbosity int   Evaluation console verbosity level:
+                              0 = print nothing
+                              1 = print only overall rating
+                              2 = print overall & per-round ratings (default 2)
+```
 
 ## Built With
 

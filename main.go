@@ -8,15 +8,30 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
+const version string = "0.4"
+
+func usage() {
+	fmt.Printf("Usage: csgo-impact-rating [OPTION]... [DEMO_FILE]\n\n")
+	fmt.Printf("Tags DEMO_FILE, creating a '.tagged.json' file in the same directory, which is\n")
+	fmt.Printf("subsequently evaluated, producing an Impact Rating report which is written to\n")
+	fmt.Printf("the console and a '.rating.json' file.\n")
+
+	fmt.Printf("\n")
+	flag.PrintDefaults()
+	fmt.Printf("\n")
+}
+
 func main() {
 	// tagging flags
-	force := flag.BoolP("force", "f", false, "Force the input demo file to be tagged, even if a .tagged.json file already exists.")
+	force := flag.BoolP("force", "f", false, "Force the input demo file to be tagged, even if a\n.tagged.json file already exists.")
 
 	// evaluation flags
-	evalSkip := flag.BoolP("eval-skip", "s", false, "Skip the evaluation process, only tag the input demo file.")
-	evalModelPath := flag.StringP("eval-model", "m", "./LightGBM_model.txt", "The path to the LightGBM_model.txt file to use for evaluation.")
-	evalQuiet := flag.BoolP("eval-quiet", "q", false, "Omit CLI output of evaluation summary.")
+	evalSkip := flag.BoolP("eval-skip", "s", false, "Skip the evaluation process, only tag the input\ndemo file.")
+	evalModelPath := flag.StringP("eval-model", "m", "./LightGBM_model.txt", "The path to the LightGBM_model.txt file to use for\nevaluation.")
+	evalVerbosity := flag.IntP("eval-verbosity", "v", 2, "Evaluation console verbosity level:\n 0 = print nothing\n 1 = print only overall rating\n 2 = print overall & per-round ratings")
 	flag.CommandLine.SortFlags = false
+	flag.ErrHelp = fmt.Errorf("version: %s", version)
+	flag.Usage = usage
 	flag.Parse()
 
 	// process the file argument
@@ -54,7 +69,13 @@ func main() {
 	}
 
 	if !(*evalSkip) {
+		// check that the model file exists
+		_, err = os.Stat(*evalModelPath)
+		if os.IsNotExist(err) {
+			panic(fmt.Sprintf("ERROR: LightGBM model not loaded - '%s' does not exist.\n", *evalModelPath))
+		}
+
 		// start evaluating the tag file
-		internal.EvaluateDemo(taggedFilePath, *evalQuiet, *evalModelPath)
+		internal.EvaluateDemo(taggedFilePath, *evalVerbosity, *evalModelPath)
 	}
 }

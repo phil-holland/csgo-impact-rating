@@ -24,6 +24,9 @@ const ActionHurt string = "hurt"
 // ActionDefuse = player has defused the bomb
 const ActionDefuse string = "defuse"
 
+// ActionDefusedOn = T player is alive when the bomb gets defused
+const ActionDefusedOn string = "defusedOn"
+
 type Demo struct {
 	Ticks []Tick `json:"ticks"`
 }

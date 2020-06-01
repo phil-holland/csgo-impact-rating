@@ -12,6 +12,7 @@ import (
 	events "github.com/markus-wa/demoinfocs-golang/v2/pkg/demoinfocs/events"
 )
 
+// TagDemo processes the input demo file, creating a '.tagged.json' file in the same directory
 func TagDemo(demoPath string) string {
 	var output Demo
 	var roundLive bool
@@ -141,10 +142,23 @@ func TagDemo(demoPath string) string {
 			tick := createTick(&p)
 			tick.GameState = GetGameState(&p, roundTimes, nil)
 			tick.Type = TickTypeBombDefuse
+
+			// add tag for the actual defuser
 			tick.Tags = append(tick.Tags, Tag{
 				Action: ActionDefuse,
 				Player: e.Player.SteamID64,
 			})
+
+			// add tag for each T alive when the bomb is defused
+			for _, t := range p.GameState().TeamTerrorists().Members() {
+				if t.IsAlive() {
+					tick.Tags = append(tick.Tags, Tag{
+						Action: ActionDefusedOn,
+						Player: t.SteamID64,
+					})
+				}
+			}
+
 			tickBuffer = append(tickBuffer, tick)
 		}
 	})
