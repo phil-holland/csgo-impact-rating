@@ -121,9 +121,9 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 
 		switch tick.Type {
 		case TickTypeDamage:
-			var flashingPlayer uint64 = 0
-			var damagingPlayer uint64 = 0
-			var hurtingPlayer uint64 = 0
+			var flashingPlayer uint64
+			var damagingPlayer uint64
+			var hurtingPlayer uint64
 			var tradedPlayers []uint64
 
 			for _, tag := range tick.Tags {
@@ -244,7 +244,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				}
 			}
 		case TickTypeBombDefuse:
-			var defusingPlayer uint64 = 0
+			var defusingPlayer uint64
 			var defusedOnPlayers []uint64
 
 			for _, tag := range tick.Tags {
