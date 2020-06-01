@@ -28,7 +28,7 @@ func main() {
 	// evaluation flags
 	evalSkip := flag.BoolP("eval-skip", "s", false, "Skip the evaluation process, only tag the input\ndemo file.")
 	evalModelPath := flag.StringP("eval-model", "m", "./LightGBM_model.txt", "The path to the LightGBM_model.txt file to use for\nevaluation.")
-	evalVerbosity := flag.IntP("eval-verbosity", "v", 2, "Evaluation console verbosity level:\n 0 = print nothing\n 1 = print only overall rating\n 2 = print overall & per-round ratings")
+	evalVerbosity := flag.IntP("eval-verbosity", "v", 2, "Evaluation console verbosity level:\n 0 = do not print a report\n 1 = print only overall rating\n 2 = print overall & per-round ratings")
 	flag.CommandLine.SortFlags = false
 	flag.ErrHelp = fmt.Errorf("version: %s", version)
 	flag.Usage = usage
