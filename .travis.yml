@@ -1,5 +1,3 @@
-sudo: false
-
 language: go
 
 go:
@@ -9,6 +7,10 @@ go:
   - 1.14
   - release
   - tip
+
+env:
+  global:
+    - GO111MODULE=on
 
 matrix:
   allow_failures:
