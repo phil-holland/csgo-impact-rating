@@ -61,6 +61,8 @@ The latest Impact Rating executable and LightGBM model file (`LightGBM_model.txt
 
 ## Usage
 
+CS:GO Impact Rating is distributed as a command line tool - it can be invoked only through a command line such as the Windows command prompt (cmd.exe) or a Linux shell.
+
 ```
 Usage: csgo-impact-rating [OPTION]... [DEMO_FILE (.dem)]
 
@@ -82,7 +84,13 @@ the console and a '.rating.json' file.
                               2 = print overall & per-round ratings (default 2)
 ```
 
-If no LightGBM model path is provided, the application will look for a file named `LightGBM_model.txt` in the same directory as the `csgo-impact-rating` executable.
+For general usage, the command line flags can be ignored. For example, the following command will **produce player ratings** for a demo file named `example.dem` in the working directory:
+
+```sh
+csgo-impact-rating example.dem
+```
+
+A full per-player Impact Rating report will be shown in the console output.
 
 ## Built With
 
