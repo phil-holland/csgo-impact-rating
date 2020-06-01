@@ -12,9 +12,6 @@ import (
 	"strings"
 )
 
-var modelPath string
-var quiet bool
-
 func EvaluateDemo(taggedFilePath string, quiet bool, modelPath string) {
 	// prepare a csv file
 	fmt.Printf("Reading contents of json file: \"%s\"\n", taggedFilePath)
@@ -34,9 +31,9 @@ func EvaluateDemo(taggedFilePath string, quiet bool, modelPath string) {
 	defer os.Remove(file.Name())
 
 	fmt.Printf("Writing csv to temporary file: \"%s\"\n", file.Name())
-	output := CSVHeader + "\n"
+	output := "roundWinner,aliveCt,aliveT,bombDefused,bombPlanted,meanHealthCt,meanHealthT,meanValueCT,meanValueT,roundTime\n"
 	for _, tick := range demo.Ticks {
-		csvLine := MakeCSVLine(&tick)
+		csvLine := makeCSVLine(&tick)
 		output += csvLine + "\n"
 	}
 	file.WriteString(output)
@@ -447,4 +444,32 @@ func EvaluateDemo(taggedFilePath string, quiet bool, modelPath string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func makeCSVLine(tick *Tick) string {
+	roundWinner := strconv.FormatInt(int64(tick.RoundWinner), 10)
+
+	aliveCt := strconv.FormatInt(int64(tick.GameState.AliveCT), 10)
+	aliveT := strconv.FormatInt(int64(tick.GameState.AliveT), 10)
+
+	bombDefused := "0"
+	if tick.GameState.BombDefused {
+		bombDefused = "1"
+	}
+
+	bombPlanted := "0"
+	if tick.GameState.BombPlanted {
+		bombPlanted = "1"
+	}
+
+	meanHealthCt := strconv.FormatFloat(tick.GameState.MeanHealthCT, 'f', 4, 64)
+	meanHealthT := strconv.FormatFloat(tick.GameState.MeanHealthT, 'f', 4, 64)
+
+	meanValueCt := strconv.FormatFloat(tick.GameState.MeanValueCT, 'f', 4, 64)
+	meanValueT := strconv.FormatFloat(tick.GameState.MeanValueT, 'f', 4, 64)
+
+	roundTime := strconv.FormatFloat(tick.GameState.RoundTime, 'f', 4, 64)
+
+	return (roundWinner + "," + aliveCt + "," + aliveT + "," + bombDefused + "," + bombPlanted +
+		"," + meanHealthCt + "," + meanHealthT + "," + meanValueCt + "," + meanValueT + "," + roundTime)
 }
