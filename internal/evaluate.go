@@ -21,7 +21,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 	fmt.Printf("Reading contents of json file: \"%s\"\n", taggedFilePath)
 	jsonRaw, _ := ioutil.ReadFile(taggedFilePath)
 
-	var demo Demo
+	var demo TaggedDemo
 	err := json.Unmarshal(jsonRaw, &demo)
 	if err != nil {
 		panic(err)

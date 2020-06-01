@@ -48,7 +48,7 @@ This concept is applied to **every change in a round's state** from the end of f
 - Being "defused on" - *if a T side player is alive when the bomb is defused*
 - Sustaining damage (being hurt)
 
-> It is important to note that some actions may result in negative Impact Rating being "rewarded". For example, sustaining a large amount of damage may shift the round outcome prediction in the favour of your opponents, and therefore you should be punished with the corresponding negative Impact Rating. This also applies to team damage, or if a teammate takes damage after being teamflashed.
+> It is important to note that some actions may result in negative Impact Rating being "rewarded". For example, sustaining a large amount of damage may shift the round outcome prediction in the favour of your opponents, and therefore you should be punished with the corresponding negative Impact Rating. This also applies to team damage, or if a teammate takes damage after you teamflash them.
 
 
 ## Prediction Model

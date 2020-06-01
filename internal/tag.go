@@ -14,9 +14,11 @@ import (
 
 // TagDemo processes the input demo file, creating a '.tagged.json' file in the same directory
 func TagDemo(demoPath string) string {
-	var output Demo
+	var output TaggedDemo
 	var roundLive bool
-	var roundTimes RoundTimes
+	var startTick int
+	var plantTick int
+	var defuseTick int
 	var tickBuffer []Tick
 	var lastKillTick int
 	var lastTScore int = -1
@@ -69,15 +71,15 @@ func TagDemo(demoPath string) string {
 			writeOutput(&output, demoPath+".tagged.json")
 		}
 
-		roundTimes.StartTick = p.GameState().IngameTick()
-		roundTimes.PlantTick = 0
-		roundTimes.DefuseTick = 0
+		startTick = p.GameState().IngameTick()
+		plantTick = 0
+		defuseTick = 0
 
 		roundLive = true
 
 		tick := createTick(&p)
 		tick.Type = TickTypeRoundStart
-		tick.GameState = GetGameState(&p, roundTimes, nil)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -114,13 +116,13 @@ func TagDemo(demoPath string) string {
 		}
 
 		if IsLive(&p) {
-			roundTimes.PlantTick = p.GameState().IngameTick()
+			plantTick = p.GameState().IngameTick()
 		}
 
 		tick := createTick(&p)
 		tick.Type = TickTypeBombPlant
 
-		tick.GameState = GetGameState(&p, roundTimes, nil)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 
 		tickBuffer = append(tickBuffer, tick)
 	})
@@ -133,14 +135,14 @@ func TagDemo(demoPath string) string {
 		if IsLive(&p) {
 			// create two ticks, one pre defuse before the actual defuse
 			preTick := createTick(&p)
-			preTick.GameState = GetGameState(&p, roundTimes, nil)
+			preTick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 			preTick.Type = TickTypePreBombDefuse
 			tickBuffer = append(tickBuffer, preTick)
 
-			roundTimes.DefuseTick = p.GameState().IngameTick()
+			defuseTick = p.GameState().IngameTick()
 
 			tick := createTick(&p)
-			tick.GameState = GetGameState(&p, roundTimes, nil)
+			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 			tick.Type = TickTypeBombDefuse
 
 			// add tag for the actual defuser
@@ -171,7 +173,7 @@ func TagDemo(demoPath string) string {
 		if IsLive(&p) && roundLive && e.Weapon.String() != "C4" {
 			tick := createTick(&p)
 
-			tick.GameState = GetGameState(&p, roundTimes, nil)
+			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 			tick.Type = TickTypeItemPickup
 
 			tickBuffer = append(tickBuffer, tick)
@@ -186,7 +188,7 @@ func TagDemo(demoPath string) string {
 		if IsLive(&p) && roundLive && p.CurrentFrame() != lastKillTick && e.Weapon.String() != "C4" {
 			tick := createTick(&p)
 
-			tick.GameState = GetGameState(&p, roundTimes, nil)
+			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 			tick.Type = TickTypeItemDrop
 
 			tickBuffer = append(tickBuffer, tick)
@@ -212,12 +214,12 @@ func TagDemo(demoPath string) string {
 		if IsLive(&p) && roundLive {
 			// create the pre-damage tick
 			pretick := createTick(&p)
-			pretick.GameState = GetGameState(&p, roundTimes, nil)
+			pretick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 			pretick.Type = TickTypePreDamage
 			tickBuffer = append(tickBuffer, pretick)
 
 			tick := createTick(&p)
-			tick.GameState = GetGameState(&p, roundTimes, &e)
+			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, &e)
 			tick.Type = TickTypeDamage
 
 			// player damaging
@@ -317,7 +319,7 @@ func createTick(p *dem.Parser) Tick {
 	return tick
 }
 
-func writeOutput(output *Demo, outputPath string) {
+func writeOutput(output *TaggedDemo, outputPath string) {
 	outputMarshalled, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
 		panic(err)
@@ -355,7 +357,7 @@ func IsLive(p *dem.Parser) bool {
 }
 
 // GetGameState serialises the current state of the round using only the features we care about
-func GetGameState(p *dem.Parser, roundTimes RoundTimes, hurtEvent *events.PlayerHurt) GameState {
+func GetGameState(p *dem.Parser, startTick int, plantTick int, defuseTick int, hurtEvent *events.PlayerHurt) GameState {
 	var state GameState
 
 	state.AliveCT = 0
@@ -408,17 +410,17 @@ func GetGameState(p *dem.Parser, roundTimes RoundTimes, hurtEvent *events.Player
 		state.MeanValueT = float64((*p).GameState().TeamTerrorists().CurrentEquipmentValue()) / float64(state.AliveT)
 	}
 
-	if roundTimes.PlantTick > 0 {
+	if plantTick > 0 {
 		// bomb has been planted
-		state.RoundTime = float64((*p).GameState().IngameTick()-roundTimes.PlantTick) / (*p).TickRate()
+		state.RoundTime = float64((*p).GameState().IngameTick()-plantTick) / (*p).TickRate()
 		state.BombPlanted = true
 
-		if roundTimes.DefuseTick > 0 {
+		if defuseTick > 0 {
 			// bomb has been defused
 			state.BombDefused = true
 		}
 	} else {
-		state.RoundTime = float64((*p).GameState().IngameTick()-roundTimes.StartTick) / (*p).TickRate()
+		state.RoundTime = float64((*p).GameState().IngameTick()-startTick) / (*p).TickRate()
 		state.BombPlanted = false
 	}
 

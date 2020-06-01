@@ -1,36 +1,61 @@
 package internal
 
+// TickTypeRoundStart denotes the tick at the very start of the round
+// (after freezetime)
 const TickTypeRoundStart = "roundStart"
+
+// TickTypePreDamage denotes the tick where damage is being done, but before
+// the damage has been processed
 const TickTypePreDamage = "prePlayerDamaged"
+
+// TickTypeDamage denotes the tick where damage is being done, after the
+// damage has been processed
 const TickTypeDamage = "playerDamaged"
+
+// TickTypeBombPlant denotes the tick where the bomb has just been planted
 const TickTypeBombPlant = "bombPlanted"
+
+// TickTypePreBombDefuse denotes the tick where the bomb has been defused, but
+// before the bomb defusal has been processed
 const TickTypePreBombDefuse = "preBombDefused"
+
+// TickTypeBombDefuse denotes the tick where the bomb has been defused,
+// after the bomb defusal has been processed
 const TickTypeBombDefuse = "bombDefused"
+
+// TickTypeItemPickup denotes the tick where an item has been picked up (or
+// bought) by a player
 const TickTypeItemPickup = "itemPickup"
+
+// TickTypeItemDrop denotes the tick where an item has been dropped (or used)
+// by a player
 const TickTypeItemDrop = "itemDrop"
 
-// ActionDamage = player damaging another player
+// ActionDamage represents a player damaging another player
 const ActionDamage string = "damage"
 
-// ActionTradeDamage = killed player's killer being damaged
+// ActionTradeDamage represents a hurt player's attacker being damaged
 const ActionTradeDamage string = "tradeDamage"
 
-// ActionFlashAssist = player flashed another player getting damaged
+// ActionFlashAssist represents a player flashing another player getting damaged
 const ActionFlashAssist string = "flashAssist"
 
-// ActionHurt = player being damaged
+// ActionHurt represents a player being damaged
 const ActionHurt string = "hurt"
 
-// ActionDefuse = player has defused the bomb
+// ActionDefuse represents a player defusing the bomb
 const ActionDefuse string = "defuse"
 
-// ActionDefusedOn = T player is alive when the bomb gets defused
+// ActionDefusedOn represents a T player being alive when the bomb gets defused
 const ActionDefusedOn string = "defusedOn"
 
-type Demo struct {
+// TaggedDemo holds all the data required in a tagged demo json file - the
+// outermost element
+type TaggedDemo struct {
 	Ticks []Tick `json:"ticks"`
 }
 
+// Tick holds data related to a single in-game tick
 type Tick struct {
 	Tick        int       `json:"tick"`
 	Type        string    `json:"type"`
@@ -44,17 +69,21 @@ type Tick struct {
 	RoundWinner uint      `json:"roundWinner"`
 }
 
+// Team holds data describing a team within the game
 type Team struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 }
 
+// Player holds data describing a player within the game
 type Player struct {
 	SteamID uint64 `json:"steamID"`
 	Name    string `json:"name"`
 	TeamID  int    `json:"teamID"`
 }
 
+// GameState holds the specific round state information used for model
+// training/inference
 type GameState struct {
 	AliveCT      int     `json:"aliveCT"`
 	AliveT       int     `json:"aliveT"`
@@ -67,30 +96,22 @@ type GameState struct {
 	BombDefused  bool    `json:"bombDefused"`
 }
 
+// Tag holds data for a single tick tag
 type Tag struct {
 	Action string `json:"action"`
 	Player uint64 `json:"player"`
 }
 
-type RatingBreakdown struct {
-	DamageRating      float64 `json:"damageRating"`
-	FlashAssistRating float64 `json:"flashAssistRating"`
-	TradeDamageRating float64 `json:"tradeDamageRating"`
-	DefuseRating      float64 `json:"defuseRating"`
-	HurtRating        float64 `json:"hurtRating"`
+// Rating holds all the data required in a rating demo json file - the
+// outermost element
+type Rating struct {
+	RoundsPlayed            int                      `json:"roundsPlayed"`
+	Players                 []PlayerRating           `json:"players"`
+	RatingChanges           []RatingChange           `json:"ratingChanges"`
+	RoundOutcomePredictions []RoundOutcomePrediction `json:"roundOutcomePredictions"`
 }
 
-type OverallRating struct {
-	AverageRating   float64         `json:"averageRating"`
-	RatingBreakdown RatingBreakdown `json:"ratingBreakdown"`
-}
-
-type RoundRating struct {
-	Round           int             `json:"round"`
-	TotalRating     float64         `json:"totalRating"`
-	RatingBreakdown RatingBreakdown `json:"ratingBreakdown"`
-}
-
+// PlayerRating holds rating summary data for a single player
 type PlayerRating struct {
 	SteamID       uint64        `json:"steamID"`
 	Name          string        `json:"name"`
@@ -98,6 +119,7 @@ type PlayerRating struct {
 	RoundRatings  []RoundRating `json:"roundRatings"`
 }
 
+// RatingChange holds data describing an individual rating change
 type RatingChange struct {
 	Tick   int     `json:"tick"`
 	Round  int     `json:"round"`
@@ -106,21 +128,33 @@ type RatingChange struct {
 	Action string  `json:"action"`
 }
 
+// RoundOutcomePrediction holds data describing the round outcome prediction
+// at a specific tick
 type RoundOutcomePrediction struct {
 	Tick              int     `json:"tick"`
 	Round             int     `json:"round"`
 	OutcomePrediction float64 `json:"outcomePrediction"`
 }
 
-type Rating struct {
-	RoundsPlayed            int                      `json:"roundsPlayed"`
-	Players                 []PlayerRating           `json:"players"`
-	RatingChanges           []RatingChange           `json:"ratingChanges"`
-	RoundOutcomePredictions []RoundOutcomePrediction `json:"roundOutcomePredictions"`
+// OverallRating holds overall rating summary data for a single player
+type OverallRating struct {
+	AverageRating   float64         `json:"averageRating"`
+	RatingBreakdown RatingBreakdown `json:"ratingBreakdown"`
 }
 
-type RoundTimes struct {
-	StartTick  int
-	PlantTick  int
-	DefuseTick int
+// RoundRating holds single-round rating summary data for a single player
+type RoundRating struct {
+	Round           int             `json:"round"`
+	TotalRating     float64         `json:"totalRating"`
+	RatingBreakdown RatingBreakdown `json:"ratingBreakdown"`
+}
+
+// RatingBreakdown holds data to describe how an overall/single round rating is
+// broken down into constituent actions
+type RatingBreakdown struct {
+	DamageRating      float64 `json:"damageRating"`
+	FlashAssistRating float64 `json:"flashAssistRating"`
+	TradeDamageRating float64 `json:"tradeDamageRating"`
+	DefuseRating      float64 `json:"defuseRating"`
+	HurtRating        float64 `json:"hurtRating"`
 }
