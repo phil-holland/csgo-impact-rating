@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/phil-holland/csgo-impact-rating/internal"
 	flag "github.com/spf13/pflag"
@@ -11,7 +12,7 @@ import (
 const version string = "0.4"
 
 func usage() {
-	fmt.Printf("Usage: csgo-impact-rating [OPTION]... [DEMO_FILE]\n\n")
+	fmt.Printf("Usage: csgo-impact-rating [OPTION]... [DEMO_FILE (.dem)]\n\n")
 	fmt.Printf("Tags DEMO_FILE, creating a '.tagged.json' file in the same directory, which is\n")
 	fmt.Printf("subsequently evaluated, producing an Impact Rating report which is written to\n")
 	fmt.Printf("the console and a '.rating.json' file.\n")
@@ -27,12 +28,22 @@ func main() {
 
 	// evaluation flags
 	evalSkip := flag.BoolP("eval-skip", "s", false, "Skip the evaluation process, only tag the input\ndemo file.")
-	evalModelPath := flag.StringP("eval-model", "m", "./LightGBM_model.txt", "The path to the LightGBM_model.txt file to use for\nevaluation.")
+	evalModelPath := flag.StringP("eval-model", "m", "", "The path to the LightGBM_model.txt file to use for\nevaluation. If omitted, the application looks for\na file named \"LightGBM_model.txt\" in the same\ndirectory as the executable.")
 	evalVerbosity := flag.IntP("eval-verbosity", "v", 2, "Evaluation console verbosity level:\n 0 = do not print a report\n 1 = print only overall rating\n 2 = print overall & per-round ratings")
 	flag.CommandLine.SortFlags = false
 	flag.ErrHelp = fmt.Errorf("version: %s", version)
 	flag.Usage = usage
 	flag.Parse()
+
+	if *evalModelPath == "" {
+		// get parent directory of executable
+		ex, err := os.Executable()
+		if err != nil {
+			panic(err)
+		}
+		exPath := filepath.Dir(ex)
+		*evalModelPath = filepath.Join(exPath, "LightGBM_model.txt")
+	}
 
 	// process the file argument
 	if len(flag.Args()) == 0 {

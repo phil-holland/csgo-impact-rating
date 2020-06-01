@@ -62,7 +62,7 @@ The latest Impact Rating executable and LightGBM model file (`LightGBM_model.txt
 ## Usage
 
 ```
-Usage: csgo-impact-rating [OPTION]... [DEMO_FILE]
+Usage: csgo-impact-rating [OPTION]... [DEMO_FILE (.dem)]
 
 Tags DEMO_FILE, creating a '.tagged.json' file in the same directory, which is
 subsequently evaluated, producing an Impact Rating report which is written to
@@ -73,12 +73,16 @@ the console and a '.rating.json' file.
   -s, --eval-skip            Skip the evaluation process, only tag the input
                              demo file.
   -m, --eval-model string    The path to the LightGBM_model.txt file to use for
-                             evaluation. (default "./LightGBM_model.txt")
+                             evaluation. If omitted, the application looks for
+                             a file named "LightGBM_model.txt" in the same
+                             directory as the executable.
   -v, --eval-verbosity int   Evaluation console verbosity level:
                               0 = do not print a report
                               1 = print only overall rating
                               2 = print overall & per-round ratings (default 2)
 ```
+
+If no LightGBM model path is provided, the application will look for a file named `LightGBM_model.txt` in the same directory as the `csgo-impact-rating` executable.
 
 ## Built With
 
