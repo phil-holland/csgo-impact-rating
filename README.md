@@ -6,9 +6,9 @@
 
 ---
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/Phil-Holland/csgo-impact-rating?label=Release&sort=semver)](https://github.com/Phil-Holland/csgo-impact-rating/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Phil-Holland/csgo-impact-rating)](https://goreportcard.com/report/github.com/Phil-Holland/csgo-impact-rating)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 <p align="center">
   <img src="https://i.imgur.com/EBbyDLv.png" />
