@@ -6,68 +6,52 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
-	"os/exec"
 	"sort"
 	"strconv"
 	"strings"
 	"text/tabwriter"
+
+	"github.com/dmitryikh/leaves"
 )
 
 // EvaluateDemo processes a .tagged.json file, producing an Impact Rating report which is written to
 // the console and a '.rating.json' file
 func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
-	// prepare a csv file
+	// load in the tagged json
 	fmt.Printf("Reading contents of json file: \"%s\"\n", taggedFilePath)
 	jsonRaw, _ := ioutil.ReadFile(taggedFilePath)
 
 	var demo Demo
 	err := json.Unmarshal(jsonRaw, &demo)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
-	// create a temp file to write the csv to
-	file, err := ioutil.TempFile(".", "temp.*.csv")
+	// build the input float slice
+	cols := 9
+	input := make([]float64, len(demo.Ticks)*cols)
+	for idx, tick := range demo.Ticks {
+		input[idx*cols] = float64(tick.GameState.AliveCT)
+		input[idx*cols+1] = float64(tick.GameState.AliveT)
+		input[idx*cols+2] = bToF64(tick.GameState.BombDefused)
+		input[idx*cols+3] = bToF64(tick.GameState.BombPlanted)
+		input[idx*cols+4] = float64(tick.GameState.MeanHealthCT)
+		input[idx*cols+5] = float64(tick.GameState.MeanHealthT)
+		input[idx*cols+6] = float64(tick.GameState.MeanValueCT)
+		input[idx*cols+7] = float64(tick.GameState.MeanValueT)
+		input[idx*cols+8] = float64(tick.GameState.RoundTime)
+	}
+
+	// load the lightgbm model in using leaves
+	fmt.Printf("Loading LightGBM model from \"%s\"\n", modelPath)
+	model, err := leaves.LGEnsembleFromFile(modelPath, true)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
-	defer os.Remove(file.Name())
+	fmt.Printf("LightGBM model loaded successfully\n")
 
-	fmt.Printf("Writing csv to temporary file: \"%s\"\n", file.Name())
-	output := "roundWinner,aliveCt,aliveT,bombDefused,bombPlanted,meanHealthCt,meanHealthT,meanValueCT,meanValueT,roundTime\n"
-	for _, tick := range demo.Ticks {
-		csvLine := makeCSVLine(&tick)
-		output += csvLine + "\n"
-	}
-	file.WriteString(output)
-	file.Close()
-
-	// create a temp file to write prediction results to
-	rfile, err := ioutil.TempFile(".", "temp.*.txt")
-	if err != nil {
-		panic(err.Error())
-	}
-	rfile.Close()
-	defer os.Remove(rfile.Name())
-
-	// invoke lightgbm prediction
-	cmd := exec.Command("lightgbm", "task=predict", "data=\""+file.Name()+"\"",
-		"header=true", "label_column=name:roundWinner", "input_model=\""+modelPath+"\"",
-		"output_result=\""+rfile.Name()+"\"")
-	fmt.Printf("Running command: %s\n", cmd.String())
-	stdout, err := cmd.Output()
-	if err != nil {
-		panic(err.Error())
-	}
-	fmt.Print(string(stdout))
-	fmt.Printf("Output results written to temporary txt file: \"%s\"\n", rfile.Name())
-
-	// read prediction results in
-	results, err := ioutil.ReadFile(rfile.Name())
-	if err != nil {
-		panic(err.Error())
-	}
-	lines := strings.Split(string(results), "\n")
+	preds := make([]float64, len(demo.Ticks))
+	model.PredictDense(input, len(demo.Ticks), cols, preds, 0, 1)
 
 	var ratingOutput Rating
 
@@ -109,10 +93,8 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 			roundsPlayed = tick.ScoreCT + tick.ScoreT + 1
 		}
 
-		pred, err := strconv.ParseFloat(lines[idx], 64)
-		if err != nil {
-			panic(err.Error())
-		}
+		// get the prediction for this tick
+		pred := preds[idx]
 
 		// amend the prediction if no CTs are alive - certain T win
 		if tick.GameState.AliveCT == 0 {
@@ -478,6 +460,13 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func bToF64(b bool) float64 {
+	if b {
+		return 1.0
+	}
+	return 0.0
 }
 
 func makeCSVLine(tick *Tick) string {

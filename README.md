@@ -57,9 +57,7 @@ Whilst the concept behind Impact Rating can in theory be implemented using any b
 
 ## Download
 
-> **Important:** CS:GO Impact Rating requires [LightGBM](https://github.com/Microsoft/LightGBM) to be installed on the system. Download the latest binary release from [github.com/Microsoft/LightGBM/releases](https://github.com/Microsoft/LightGBM/releases) and either make sure the executable is added to the system path, or placed in the same directory as the csgo-impact-rating executable.
-
-The latest Impact Rating executable and LightGBM model file (`LightGBM_model.txt`) can be downloaded from this project's release page here: [github.com/Phil-Holland/csgo-impact-rating/releases](https://github.com/Phil-Holland/csgo-impact-rating/releases). These can be placed anywhere on the system - add the parent directory to the system path to access the executable from any location.
+The latest Impact Rating executable and LightGBM model file (`LightGBM_model.txt`) can be downloaded from this project's release page here: [github.com/Phil-Holland/csgo-impact-rating/releases](https://github.com/Phil-Holland/csgo-impact-rating/releases). These can be placed together anywhere on the system - add the parent directory to the system path to access the executable from any location.
 
 ## Usage
 
@@ -85,6 +83,7 @@ the console and a '.rating.json' file.
 ## Built With
 
 - [demoinfocs-golang](https://github.com/markus-wa/demoinfocs-golang) - used to parse CS:GO demo files
+- [leaves](https://github.com/dmitryikh/leaves) - used to process LightGBM models internally
 - [pflag](https://github.com/spf13/pflag) - used to build the command line interface
 - [pb (v3)](https://github.com/cheggaaa/pb) - used for progress visualisation
 - [LightGBM](https://github.com/Microsoft/LightGBM) - used for model training/round outcome prediction
