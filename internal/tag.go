@@ -272,7 +272,7 @@ func TagDemo(demoPath string) string {
 
 	err = p.ParseToEnd()
 	if err != nil {
-		panic(err)
+		fmt.Printf("WARNING: Demo was not parsed successfully - output may not contain data for the whole match")
 	}
 
 	if tickBuffer != nil {
