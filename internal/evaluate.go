@@ -108,8 +108,16 @@ func EvaluateDemo(taggedFilePath string, quiet bool, modelPath string) {
 			panic(err.Error())
 		}
 
+		// amend the prediction if no CTs are alive - certain T win
+		if tick.GameState.AliveCT == 0 {
+			pred = 1.0
+		}
 		// amend the prediction if the bomb has been defused - certain ct win
 		if tick.GameState.BombDefused {
+			pred = 0.0
+		}
+		// amend the prediction if no Ts are alive and the bomb is not planted - certain CT win
+		if !tick.GameState.BombPlanted && tick.GameState.AliveT == 0 {
 			pred = 0.0
 		}
 
