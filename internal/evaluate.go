@@ -33,8 +33,8 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 	for idx, tick := range demo.Ticks {
 		input[idx*cols] = float64(tick.GameState.AliveCT)
 		input[idx*cols+1] = float64(tick.GameState.AliveT)
-		input[idx*cols+2] = bToF64(tick.GameState.BombDefused)
-		input[idx*cols+3] = bToF64(tick.GameState.BombPlanted)
+		input[idx*cols+2] = bToF64(tick.GameState.BombPlanted)
+		input[idx*cols+3] = bToF64(tick.GameState.BombDefused)
 		input[idx*cols+4] = float64(tick.GameState.MeanHealthCT)
 		input[idx*cols+5] = float64(tick.GameState.MeanHealthT)
 		input[idx*cols+6] = float64(tick.GameState.MeanValueCT)
