@@ -58,7 +58,13 @@ Whilst the concept behind Impact Rating can in theory be implemented using any b
 
 ## Download
 
-The latest Impact Rating distribution for your system can be downloaded from this project's release page here: [github.com/Phil-Holland/csgo-impact-rating/releases](https://github.com/Phil-Holland/csgo-impact-rating/releases/latest).
+The latest Impact Rating distribution for your system can be downloaded from this project's release page here: 
+
+<p align="center">
+  <a href="https://github.com/Phil-Holland/csgo-impact-rating/releases/latest">
+    <img src="https://i.imgur.com/h72HF01.png" />
+  </a>
+</p>
 
 Extract the executable and the `LightGBM_model.txt` file to a directory of your choosing - add this directory to the system path to access the executable from any location.
 
@@ -105,6 +111,6 @@ A full per-player Impact Rating report will be shown in the console output.
 
 ## Donate
 
-Whilst CS:GO Impact Rating is completely free to use, donations are incredibly appreciated! Buy me a coffee with the following link:
+CS:GO Impact Rating is completely free to use, but any donations are incredibly appreciated! Buy me a coffee with the following link:
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/PhilHolland)
