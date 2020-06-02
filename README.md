@@ -13,7 +13,7 @@
 
 <p align="center">
   <img src="https://i.imgur.com/EBbyDLv.png" />
-  <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#usage'>Usage</a> • <a href='#built-with'>Built With</a>
+  <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#usage'>Usage</a> • <a href='#built-with'>Built With</a> • <a href='#donate'>Donate</a>
 </p>
 
 ## How it Works
@@ -102,3 +102,9 @@ A full per-player Impact Rating report will be shown in the console output.
 - [pflag](https://github.com/spf13/pflag) - used to build the command line interface
 - [pb (v3)](https://github.com/cheggaaa/pb) - used for progress visualisation
 - [LightGBM](https://github.com/Microsoft/LightGBM) - used for model training/round outcome prediction
+
+## Donate
+
+Whilst CS:GO Impact Rating is completely free to use, donations are incredibly appreciated! Buy me a coffee with the following link:
+
+[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/PhilHolland)
