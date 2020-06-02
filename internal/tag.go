@@ -46,6 +46,8 @@ func TagDemo(demoPath string) string {
 	defer f.Close()
 
 	p := dem.NewParser(f)
+	defer p.Close()
+
 	tmpl := `{{ green "Progress:" }} {{ bar . "[" "#" "#" "." "]"}} {{speed .}} {{percent .}}`
 	bar := pb.ProgressBarTemplate(tmpl).Start64(100)
 
