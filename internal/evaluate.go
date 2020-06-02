@@ -120,7 +120,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 		change := lastPred - pred
 
 		switch tick.Type {
-		case TickTypeDamage:
+		case TickDamage:
 			var flashingPlayer uint64
 			var damagingPlayer uint64
 			var hurtingPlayer uint64
@@ -243,7 +243,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 					hurtRatings[hurtingPlayer] -= change
 				}
 			}
-		case TickTypeBombDefuse:
+		case TickBombDefuse:
 			var defusingPlayer uint64
 			var defusedOnPlayers []uint64
 

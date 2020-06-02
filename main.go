@@ -9,8 +9,6 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-const version string = "0.5"
-
 func usage() {
 	fmt.Printf("Usage: csgo-impact-rating [OPTION]... [DEMO_FILE (.dem)]\n\n")
 	fmt.Printf("Tags DEMO_FILE, creating a '.tagged.json' file in the same directory, which is\n")
@@ -31,7 +29,7 @@ func main() {
 	evalModelPath := flag.StringP("eval-model", "m", "", "The path to the LightGBM_model.txt file to use for\nevaluation. If omitted, the application looks for\na file named \"LightGBM_model.txt\" in the same\ndirectory as the executable.")
 	evalVerbosity := flag.IntP("eval-verbosity", "v", 2, "Evaluation console verbosity level:\n 0 = do not print a report\n 1 = print only overall rating\n 2 = print overall & per-round ratings")
 	flag.CommandLine.SortFlags = false
-	flag.ErrHelp = fmt.Errorf("version: %s", version)
+	flag.ErrHelp = fmt.Errorf("version: %s", internal.Version)
 	flag.Usage = usage
 	flag.Parse()
 
@@ -47,17 +45,20 @@ func main() {
 
 	// process the file argument
 	if len(flag.Args()) == 0 {
-		panic("demo file not supplied.")
+		fmt.Printf("ERROR: Demo file not supplied.\n")
+		os.Exit(1)
 	}
 	if len(flag.Args()) > 1 {
-		panic("Only one demo file can be supplied.")
+		fmt.Printf("ERROR: Only one demo file can be supplied.\n")
+		os.Exit(1)
 	}
 	demoPath := flag.Args()[0]
 
 	// check that the file exists
 	_, err := os.Stat(demoPath)
 	if os.IsNotExist(err) {
-		panic(fmt.Sprintf("ERROR: '%s' is not a file.\n", demoPath))
+		fmt.Printf("ERROR: '%s' is not a file.\n", demoPath)
+		os.Exit(1)
 	}
 
 	// check if a .tagged.json file exists
@@ -83,7 +84,8 @@ func main() {
 		// check that the model file exists
 		_, err = os.Stat(*evalModelPath)
 		if os.IsNotExist(err) {
-			panic(fmt.Sprintf("ERROR: LightGBM model not loaded - '%s' does not exist.\n", *evalModelPath))
+			fmt.Printf("ERROR: LightGBM model not loaded - '%s' does not exist.\n", *evalModelPath)
+			os.Exit(1)
 		}
 
 		// start evaluating the tag file

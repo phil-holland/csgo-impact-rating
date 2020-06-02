@@ -79,7 +79,7 @@ func TagDemo(demoPath string) string {
 		roundLive = true
 
 		tick := createTick(&p)
-		tick.Type = TickTypeRoundStart
+		tick.Type = TickRoundStart
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 		tickBuffer = append(tickBuffer, tick)
 	})
@@ -121,7 +121,7 @@ func TagDemo(demoPath string) string {
 		}
 
 		tick := createTick(&p)
-		tick.Type = TickTypeBombPlant
+		tick.Type = TickBombPlant
 
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 
@@ -136,14 +136,14 @@ func TagDemo(demoPath string) string {
 		// create two ticks, one pre defuse before the actual defuse
 		preTick := createTick(&p)
 		preTick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-		preTick.Type = TickTypePreBombDefuse
+		preTick.Type = TickPreBombDefuse
 		tickBuffer = append(tickBuffer, preTick)
 
 		defuseTick = p.GameState().IngameTick()
 
 		tick := createTick(&p)
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-		tick.Type = TickTypeBombDefuse
+		tick.Type = TickBombDefuse
 
 		// add tag for the actual defuser
 		tick.Tags = append(tick.Tags, Tag{
@@ -172,7 +172,7 @@ func TagDemo(demoPath string) string {
 
 		tick := createTick(&p)
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-		tick.Type = TickTypeBombExplode
+		tick.Type = TickBombExplode
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -183,7 +183,7 @@ func TagDemo(demoPath string) string {
 
 		tick := createTick(&p)
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-		tick.Type = TickTypeItemPickedUp
+		tick.Type = TickItemPickedUp
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -193,7 +193,7 @@ func TagDemo(demoPath string) string {
 		}
 		tick := createTick(&p)
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-		tick.Type = TickTypeItemDrop
+		tick.Type = TickItemDrop
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -216,12 +216,12 @@ func TagDemo(demoPath string) string {
 		// create the pre-damage tick
 		pretick := createTick(&p)
 		pretick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-		pretick.Type = TickTypePreDamage
+		pretick.Type = TickPreDamage
 		tickBuffer = append(tickBuffer, pretick)
 
 		tick := createTick(&p)
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, &e)
-		tick.Type = TickTypeDamage
+		tick.Type = TickDamage
 
 		// player damaging
 		if e.Attacker != nil {

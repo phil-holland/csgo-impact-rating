@@ -1,57 +1,5 @@
 package internal
 
-// TickTypeRoundStart denotes the tick at the very start of the round
-// (after freezetime)
-const TickTypeRoundStart string = "roundStart"
-
-// TickTypePreDamage denotes the tick where damage is being done, but before
-// the damage has been processed
-const TickTypePreDamage string = "prePlayerDamaged"
-
-// TickTypeDamage denotes the tick where damage is being done, after the
-// damage has been processed
-const TickTypeDamage string = "playerDamaged"
-
-// TickTypeBombPlant denotes the tick where the bomb has just been planted
-const TickTypeBombPlant string = "bombPlanted"
-
-// TickTypePreBombDefuse denotes the tick where the bomb has been defused, but
-// before the bomb defusal has been processed
-const TickTypePreBombDefuse string = "preBombDefused"
-
-// TickTypeBombDefuse denotes the tick where the bomb has been defused,
-// after the bomb defusal has been processed
-const TickTypeBombDefuse string = "bombDefused"
-
-// TickTypeBombExplode denotes the tick where the bomb has exploded
-const TickTypeBombExplode string = "bombExploded"
-
-// TickTypeItemPickedUp denotes the tick where an item has been picked up (or
-// bought) by a player
-const TickTypeItemPickedUp string = "itemPickedUp"
-
-// TickTypeItemDrop denotes the tick where an item has been dropped (or used)
-// by a player
-const TickTypeItemDrop string = "itemDropped"
-
-// ActionDamage represents a player damaging another player
-const ActionDamage string = "damage"
-
-// ActionTradeDamage represents a hurt player's attacker being damaged
-const ActionTradeDamage string = "tradeDamage"
-
-// ActionFlashAssist represents a player flashing another player getting damaged
-const ActionFlashAssist string = "flashAssist"
-
-// ActionHurt represents a player being damaged
-const ActionHurt string = "hurt"
-
-// ActionDefuse represents a player defusing the bomb
-const ActionDefuse string = "defuse"
-
-// ActionDefusedOn represents a T player being alive when the bomb gets defused
-const ActionDefusedOn string = "defusedOn"
-
 // TaggedDemo holds all the data required in a tagged demo json file - the
 // outermost element
 type TaggedDemo struct {
