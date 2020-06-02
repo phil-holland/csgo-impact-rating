@@ -53,7 +53,11 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 	preds := make([]float64, len(demo.Ticks))
 	model.PredictDense(input, len(demo.Ticks), cols, preds, 0, 1)
 
-	var ratingOutput Rating
+	var ratingOutput Rating = Rating{
+		RatingMetadata: RatingMetadata{
+			Version: Version,
+		},
+	}
 
 	// create a load of maps to hold cumulative player rating values
 	ratings := make(map[uint64]float64)

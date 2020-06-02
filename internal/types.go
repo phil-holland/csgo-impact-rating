@@ -3,7 +3,14 @@ package internal
 // TaggedDemo holds all the data required in a tagged demo json file - the
 // outermost element
 type TaggedDemo struct {
-	Ticks []Tick `json:"ticks"`
+	TaggedDemoMetadata TaggedDemoMetadata `json:"metadata"`
+	Ticks              []Tick             `json:"ticks"`
+}
+
+// TaggedDemoMetadata holds all the metadata (version etc.) for a tagged
+// demo file
+type TaggedDemoMetadata struct {
+	Version string `json:"version"`
 }
 
 // Tick holds data related to a single in-game tick
@@ -56,10 +63,17 @@ type Tag struct {
 // Rating holds all the data required in a rating demo json file - the
 // outermost element
 type Rating struct {
+	RatingMetadata          RatingMetadata           `json:"metadata"`
 	RoundsPlayed            int                      `json:"roundsPlayed"`
 	Players                 []PlayerRating           `json:"players"`
 	RatingChanges           []RatingChange           `json:"ratingChanges"`
 	RoundOutcomePredictions []RoundOutcomePrediction `json:"roundOutcomePredictions"`
+}
+
+// RatingMetadata holds all the metadata (version etc.) for a rating
+// demo json file
+type RatingMetadata struct {
+	Version string `json:"version"`
 }
 
 // PlayerRating holds rating summary data for a single player

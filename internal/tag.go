@@ -15,7 +15,12 @@ import (
 // TagDemo processes the input demo file, creating a '.tagged.json' file in the same directory
 // TODO: take in outputpath as a parameter
 func TagDemo(demoPath string) string {
-	var output TaggedDemo
+	var output TaggedDemo = TaggedDemo{
+		TaggedDemoMetadata: TaggedDemoMetadata{
+			Version: Version,
+		},
+		Ticks: make([]Tick, 0),
+	}
 	var roundLive bool
 	var startTick int
 	var plantTick int
