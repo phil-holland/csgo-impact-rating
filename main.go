@@ -9,7 +9,7 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-const version string = "0.4"
+const version string = "0.5"
 
 func usage() {
 	fmt.Printf("Usage: csgo-impact-rating [OPTION]... [DEMO_FILE (.dem)]\n\n")

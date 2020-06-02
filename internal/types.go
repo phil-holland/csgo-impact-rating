@@ -2,34 +2,37 @@ package internal
 
 // TickTypeRoundStart denotes the tick at the very start of the round
 // (after freezetime)
-const TickTypeRoundStart = "roundStart"
+const TickTypeRoundStart string = "roundStart"
 
 // TickTypePreDamage denotes the tick where damage is being done, but before
 // the damage has been processed
-const TickTypePreDamage = "prePlayerDamaged"
+const TickTypePreDamage string = "prePlayerDamaged"
 
 // TickTypeDamage denotes the tick where damage is being done, after the
 // damage has been processed
-const TickTypeDamage = "playerDamaged"
+const TickTypeDamage string = "playerDamaged"
 
 // TickTypeBombPlant denotes the tick where the bomb has just been planted
-const TickTypeBombPlant = "bombPlanted"
+const TickTypeBombPlant string = "bombPlanted"
 
 // TickTypePreBombDefuse denotes the tick where the bomb has been defused, but
 // before the bomb defusal has been processed
-const TickTypePreBombDefuse = "preBombDefused"
+const TickTypePreBombDefuse string = "preBombDefused"
 
 // TickTypeBombDefuse denotes the tick where the bomb has been defused,
 // after the bomb defusal has been processed
-const TickTypeBombDefuse = "bombDefused"
+const TickTypeBombDefuse string = "bombDefused"
 
-// TickTypeItemPickup denotes the tick where an item has been picked up (or
+// TickTypeBombExplode denotes the tick where the bomb has exploded
+const TickTypeBombExplode string = "bombExploded"
+
+// TickTypeItemPickedUp denotes the tick where an item has been picked up (or
 // bought) by a player
-const TickTypeItemPickup = "itemPickup"
+const TickTypeItemPickedUp string = "itemPickedUp"
 
 // TickTypeItemDrop denotes the tick where an item has been dropped (or used)
 // by a player
-const TickTypeItemDrop = "itemDrop"
+const TickTypeItemDrop string = "itemDropped"
 
 // ActionDamage represents a player damaging another player
 const ActionDamage string = "damage"

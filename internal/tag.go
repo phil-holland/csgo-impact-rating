@@ -13,6 +13,7 @@ import (
 )
 
 // TagDemo processes the input demo file, creating a '.tagged.json' file in the same directory
+// TODO: take in outputpath as a parameter
 func TagDemo(demoPath string) string {
 	var output TaggedDemo
 	var roundLive bool
@@ -68,7 +69,7 @@ func TagDemo(demoPath string) string {
 		if tickBuffer != nil {
 			output.Ticks = append(output.Ticks, tickBuffer...)
 			tickBuffer = nil
-			writeOutput(&output, demoPath+".tagged.json")
+			writeTaggedDemo(&output, demoPath+".tagged.json")
 		}
 
 		startTick = p.GameState().IngameTick()
@@ -128,71 +129,72 @@ func TagDemo(demoPath string) string {
 	})
 
 	p.RegisterEventHandler(func(e events.BombDefused) {
-		if matchFinished {
+		if matchFinished || !IsLive(&p) {
 			return
 		}
 
-		if IsLive(&p) {
-			// create two ticks, one pre defuse before the actual defuse
-			preTick := createTick(&p)
-			preTick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-			preTick.Type = TickTypePreBombDefuse
-			tickBuffer = append(tickBuffer, preTick)
+		// create two ticks, one pre defuse before the actual defuse
+		preTick := createTick(&p)
+		preTick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		preTick.Type = TickTypePreBombDefuse
+		tickBuffer = append(tickBuffer, preTick)
 
-			defuseTick = p.GameState().IngameTick()
+		defuseTick = p.GameState().IngameTick()
 
-			tick := createTick(&p)
-			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-			tick.Type = TickTypeBombDefuse
+		tick := createTick(&p)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.Type = TickTypeBombDefuse
 
-			// add tag for the actual defuser
-			tick.Tags = append(tick.Tags, Tag{
-				Action: ActionDefuse,
-				Player: e.Player.SteamID64,
-			})
+		// add tag for the actual defuser
+		tick.Tags = append(tick.Tags, Tag{
+			Action: ActionDefuse,
+			Player: e.Player.SteamID64,
+		})
 
-			// add tag for each T alive when the bomb is defused
-			for _, t := range p.GameState().TeamTerrorists().Members() {
-				if t.IsAlive() {
-					tick.Tags = append(tick.Tags, Tag{
-						Action: ActionDefusedOn,
-						Player: t.SteamID64,
-					})
-				}
+		// add tag for each T alive when the bomb is defused
+		for _, t := range p.GameState().TeamTerrorists().Members() {
+			if t.IsAlive() {
+				tick.Tags = append(tick.Tags, Tag{
+					Action: ActionDefusedOn,
+					Player: t.SteamID64,
+				})
 			}
-
-			tickBuffer = append(tickBuffer, tick)
 		}
+
+		tickBuffer = append(tickBuffer, tick)
+
+	})
+
+	p.RegisterEventHandler(func(e events.BombExplode) {
+		if matchFinished || !IsLive(&p) || !roundLive {
+			return
+		}
+
+		tick := createTick(&p)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.Type = TickTypeBombExplode
+		tickBuffer = append(tickBuffer, tick)
 	})
 
 	p.RegisterEventHandler(func(e events.ItemPickup) {
-		if matchFinished {
+		if matchFinished || !IsLive(&p) || !roundLive || e.Weapon.String() == "C4" {
 			return
 		}
 
-		if IsLive(&p) && roundLive && e.Weapon.String() != "C4" {
-			tick := createTick(&p)
-
-			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-			tick.Type = TickTypeItemPickup
-
-			tickBuffer = append(tickBuffer, tick)
-		}
+		tick := createTick(&p)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.Type = TickTypeItemPickedUp
+		tickBuffer = append(tickBuffer, tick)
 	})
 
 	p.RegisterEventHandler(func(e events.ItemDrop) {
-		if matchFinished {
+		if matchFinished || !IsLive(&p) || p.CurrentFrame() == lastKillTick || !roundLive || e.Weapon.String() == "C4" {
 			return
 		}
-
-		if IsLive(&p) && roundLive && p.CurrentFrame() != lastKillTick && e.Weapon.String() != "C4" {
-			tick := createTick(&p)
-
-			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-			tick.Type = TickTypeItemDrop
-
-			tickBuffer = append(tickBuffer, tick)
-		}
+		tick := createTick(&p)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.Type = TickTypeItemDrop
+		tickBuffer = append(tickBuffer, tick)
 	})
 
 	p.RegisterEventHandler(func(e events.PlayerFlashed) {
@@ -207,68 +209,67 @@ func TagDemo(demoPath string) string {
 	})
 
 	p.RegisterEventHandler(func(e events.PlayerHurt) {
-		if matchFinished {
+		if matchFinished || !IsLive(&p) || !roundLive {
 			return
 		}
 
-		if IsLive(&p) && roundLive {
-			// create the pre-damage tick
-			pretick := createTick(&p)
-			pretick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-			pretick.Type = TickTypePreDamage
-			tickBuffer = append(tickBuffer, pretick)
+		// create the pre-damage tick
+		pretick := createTick(&p)
+		pretick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		pretick.Type = TickTypePreDamage
+		tickBuffer = append(tickBuffer, pretick)
 
-			tick := createTick(&p)
-			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, &e)
-			tick.Type = TickTypeDamage
+		tick := createTick(&p)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, &e)
+		tick.Type = TickTypeDamage
 
-			// player damaging
-			if e.Attacker != nil {
+		// player damaging
+		if e.Attacker != nil {
+			tick.Tags = append(tick.Tags, Tag{
+				Action: ActionDamage,
+				Player: e.Attacker.SteamID64,
+			})
+		}
+
+		if e.Player.FlashDurationTime() >= 1.0 {
+			if val, ok := lastFlashedPlayer[e.Player.SteamID64]; ok {
 				tick.Tags = append(tick.Tags, Tag{
-					Action: ActionDamage,
-					Player: e.Attacker.SteamID64,
+					Action: ActionFlashAssist,
+					Player: val,
 				})
 			}
+		}
 
-			if e.Player.FlashDurationTime() >= 1.0 {
-				if val, ok := lastFlashedPlayer[e.Player.SteamID64]; ok {
+		if e.Attacker != nil {
+			// only register players on opposing teams
+			if p.GameState().Team(e.Attacker.Team).ID() != p.GameState().Team(e.Player.Team).ID() {
+				if _, ok := lastDamageTick[e.Attacker.SteamID64]; !ok {
+					lastDamageTick[e.Attacker.SteamID64] = make(map[uint64]int)
+				}
+				lastDamageTick[e.Attacker.SteamID64][e.Player.SteamID64] = p.CurrentFrame()
+			}
+		}
+
+		// register any valid trade damage
+		if _, ok := lastDamageTick[e.Player.SteamID64]; ok {
+			for id, t := range lastDamageTick[e.Player.SteamID64] {
+				if float64(p.CurrentFrame()-t)*p.TickTime().Seconds() <= 2.0 && e.Attacker.SteamID64 != id {
 					tick.Tags = append(tick.Tags, Tag{
-						Action: ActionFlashAssist,
-						Player: val,
+						Action: ActionTradeDamage,
+						Player: id,
 					})
 				}
 			}
+		}
 
-			if e.Attacker != nil {
-				// only register players on opposing teams
-				if p.GameState().Team(e.Attacker.Team).ID() != p.GameState().Team(e.Player.Team).ID() {
-					if _, ok := lastDamageTick[e.Attacker.SteamID64]; !ok {
-						lastDamageTick[e.Attacker.SteamID64] = make(map[uint64]int)
-					}
-					lastDamageTick[e.Attacker.SteamID64][e.Player.SteamID64] = p.CurrentFrame()
-				}
-			}
+		tick.Tags = append(tick.Tags, Tag{
+			Action: ActionHurt,
+			Player: e.Player.SteamID64,
+		})
+		tickBuffer = append(tickBuffer, tick)
 
-			if _, ok := lastDamageTick[e.Player.SteamID64]; ok {
-				for id, t := range lastDamageTick[e.Player.SteamID64] {
-					if float64(p.CurrentFrame()-t)*p.TickTime().Seconds() <= 2.0 && e.Attacker.SteamID64 != id {
-						tick.Tags = append(tick.Tags, Tag{
-							Action: ActionTradeDamage,
-							Player: id,
-						})
-					}
-				}
-			}
-
-			tick.Tags = append(tick.Tags, Tag{
-				Action: ActionHurt,
-				Player: e.Player.SteamID64,
-			})
-			tickBuffer = append(tickBuffer, tick)
-
-			if e.Health <= 0 {
-				lastKillTick = p.CurrentFrame()
-			}
+		if e.Health <= 0 {
+			lastKillTick = p.CurrentFrame()
 		}
 	})
 
@@ -280,7 +281,7 @@ func TagDemo(demoPath string) string {
 	if tickBuffer != nil {
 		output.Ticks = append(output.Ticks, tickBuffer...)
 		tickBuffer = nil
-		writeOutput(&output, demoPath+".tagged.json")
+		writeTaggedDemo(&output, demoPath+".tagged.json")
 	}
 
 	bar.SetCurrent(100)
@@ -319,7 +320,7 @@ func createTick(p *dem.Parser) Tick {
 	return tick
 }
 
-func writeOutput(output *TaggedDemo, outputPath string) {
+func writeTaggedDemo(output *TaggedDemo, outputPath string) {
 	outputMarshalled, err := json.MarshalIndent(output, "", "  ")
 	if err != nil {
 		panic(err)
