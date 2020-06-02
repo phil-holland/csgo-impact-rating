@@ -349,8 +349,8 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 		if idx == len(ratingOutput.RatingChanges)-1 || ratingOutput.RatingChanges[idx+1].Round >= currentRound+1 {
 			if verbosity >= 2 {
 				fmt.Printf("\n> Round %d:\n\n", currentRound)
-				fmt.Fprintln(tabWriter, "Player \t Round Impact (%) \t Breakdown")
-				fmt.Fprintln(tabWriter, "------ \t ---------------- \t ---------")
+				fmt.Fprintln(tabWriter, "Player \t Round Impact (%) \t|\t Damage (%) \t Flash Assists (%) \t Trade Damage (%) \t Defuses (%) \t Defuses On (%) \t Damage Recv. (%)")
+				fmt.Fprintln(tabWriter, "------ \t ---------------- \t|\t ---------- \t ----------------- \t ---------------- \t ----------- \t -------------- \t ----------------")
 			}
 			for _, name := range playerNames {
 				id := ids[name]
@@ -378,7 +378,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				deor := 100.0 * roundDefusedOnRatings[id]
 				hr := 100.0 * roundHurtRatings[id]
 				if verbosity >= 2 {
-					fmt.Fprintf(tabWriter, "%s \t %.3f \t (dmg: %.3f, flash: %.3f, trd: %.3f, def: %.3f, defo: %.3f, hurt: %.3f)\n",
+					fmt.Fprintf(tabWriter, "%s \t %.3f \t|\t %.3f \t %.3f \t %.3f \t %.3f \t %.3f \t %.3f\n",
 						name, r, dr, far, tdr, der, deor, hr)
 				}
 				if r > bestRoundRating {
@@ -406,8 +406,8 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 
 	if verbosity >= 1 {
 		fmt.Printf("\n> Overall:\n\n")
-		fmt.Fprintln(tabWriter, "Player \t Average Impact (%) \t Breakdown")
-		fmt.Fprintln(tabWriter, "------ \t ------------------ \t ---------")
+		fmt.Fprintln(tabWriter, "Player \t Average Impact (%) \t|\t Damage (%) \t Flash Assists (%) \t Trade Damage (%) \t Defuses (%) \t Defuses On (%) \t Damage Recv. (%)")
+		fmt.Fprintln(tabWriter, "------ \t ------------------ \t|\t ---------- \t ----------------- \t ---------------- \t ----------- \t -------------- \t ----------------")
 		for _, name := range playerNames {
 			id := ids[name]
 			avgRating := 100.0 * ratings[id] / float64(roundsPlayed)
@@ -419,7 +419,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 			avgDefusedOnRating := 100.0 * defusedOnRatings[id] / float64(roundsPlayed)
 			avgHurtRating := 100.0 * hurtRatings[id] / float64(roundsPlayed)
 
-			fmt.Fprintf(tabWriter, "%s \t %.3f \t (dmg: %.3f, flash: %.3f, trd: %.3f, def: %.3f, defo: %.3f, hurt: %.3f)\n",
+			fmt.Fprintf(tabWriter, "%s \t %.3f \t|\t %.3f \t %.3f \t %.3f \t %.3f \t %.3f \t %.3f\n",
 				name, avgRating, avgDamageRating, avgFlashAssistRating, avgTradeDamageRating, avgDefuseRating, avgDefusedOnRating, avgHurtRating)
 		}
 		tabWriter.Flush()
