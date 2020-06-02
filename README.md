@@ -6,10 +6,11 @@
 
 ---
 
-[![Latest release](https://img.shields.io/github/v/release/Phil-Holland/csgo-impact-rating?label=Release&sort=semver)](https://github.com/Phil-Holland/csgo-impact-rating/releases)
+[![Latest release](https://img.shields.io/github/v/release/Phil-Holland/csgo-impact-rating?label=release&sort=semver)](https://github.com/Phil-Holland/csgo-impact-rating/releases)
 [![Build Status](https://travis-ci.org/Phil-Holland/csgo-impact-rating.svg?branch=master)](https://travis-ci.org/Phil-Holland/csgo-impact-rating)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Phil-Holland/csgo-impact-rating)](https://goreportcard.com/report/github.com/Phil-Holland/csgo-impact-rating)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating?ref=badge_shield)
 
 <p align="center">
   <img src="https://i.imgur.com/EBbyDLv.png" />
