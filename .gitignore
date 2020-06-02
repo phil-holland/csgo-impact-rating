@@ -1,6 +1,5 @@
 demos/*
 scripts/*
-lightgbm/*
 dist/*
 LightGBM_model.txt
 
