@@ -13,7 +13,7 @@ import (
 )
 
 // TagDemo processes the input demo file, creating a '.tagged.json' file in the same directory
-// TODO: take in outputpath as a parameter
+// TODO: take in output path as a parameter
 func TagDemo(demoPath string) string {
 	var output TaggedDemo = TaggedDemo{
 		TaggedDemoMetadata: TaggedDemoMetadata{
@@ -280,9 +280,14 @@ func TagDemo(demoPath string) string {
 		}
 	})
 
-	err = p.ParseToEnd()
-	if err != nil {
-		fmt.Printf("WARNING: Demo was not parsed successfully - output may not contain data for the whole match")
+	// parse the demo file tick-by-tick - record any problem ticks, but keep
+	// parsing if any issues are encountered
+	problemsEncountered := 0
+	for ok, err := p.ParseNextFrame(); ok; ok, err = p.ParseNextFrame() {
+		if err != nil {
+			problemsEncountered++
+			continue
+		}
 	}
 
 	if tickBuffer != nil {
@@ -293,6 +298,11 @@ func TagDemo(demoPath string) string {
 
 	bar.SetCurrent(100)
 	bar.Finish()
+
+	if problemsEncountered > 0 {
+		fmt.Printf("WARNING: %d unexpected issues were encountered whilst parsing the demo file - output may be incomplete.\n",
+			problemsEncountered)
+	}
 
 	return demoPath + ".tagged.json"
 }
