@@ -4,6 +4,12 @@ go:
   - 1.12
   - 1.13
   - 1.14
+  - stable
+  - master
+
+matrix:
+  allow_failures:
+    - go: master
 
 env:
   global:
