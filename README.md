@@ -58,7 +58,9 @@ Whilst the concept behind Impact Rating can in theory be implemented using any b
 
 ## Download
 
-The latest Impact Rating executable and LightGBM model file (`LightGBM_model.txt`) can be downloaded from this project's release page here: [github.com/Phil-Holland/csgo-impact-rating/releases](https://github.com/Phil-Holland/csgo-impact-rating/releases). These can be placed together anywhere on the system - add the parent directory to the system path to access the executable from any location.
+The latest Impact Rating distribution for your system can be downloaded from this project's release page here: [github.com/Phil-Holland/csgo-impact-rating/releases](https://github.com/Phil-Holland/csgo-impact-rating/releases/latest).
+
+Extract the executable and the `LightGBM_model.txt` file to a directory of your choosing - add this directory to the system path to access the executable from any location.
 
 ## Usage
 
