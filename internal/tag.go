@@ -100,7 +100,6 @@ func TagDemo(demoPath string) string {
 		}
 
 		bar.SetCurrent(int64(p.Progress() * 100))
-
 		roundLive = false
 		switch e.Reason {
 		case events.RoundEndReasonTargetBombed, events.RoundEndReasonBombDefused, events.RoundEndReasonCTWin, events.RoundEndReasonTerroristsWin, events.RoundEndReasonTargetSaved:
@@ -139,9 +138,11 @@ func TagDemo(demoPath string) string {
 	})
 
 	p.RegisterEventHandler(func(e events.BombDefused) {
-		if matchFinished || !IsLive(&p) {
+		if matchFinished || !IsLive(&p) || !roundLive {
 			return
 		}
+
+		roundLive = false
 
 		// create two ticks, one pre defuse before the actual defuse
 		preTick := createTick(&p)
@@ -180,6 +181,8 @@ func TagDemo(demoPath string) string {
 			return
 		}
 
+		roundLive = false
+
 		tick := createTick(&p)
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 		tick.Type = TickBombExplode
@@ -198,7 +201,7 @@ func TagDemo(demoPath string) string {
 	})
 
 	p.RegisterEventHandler(func(e events.ItemDrop) {
-		if matchFinished || !IsLive(&p) || p.CurrentFrame() == lastKillTick || !roundLive || e.Weapon.String() == "C4" {
+		if matchFinished || !IsLive(&p) || !roundLive || p.CurrentFrame() == lastKillTick || e.Weapon.String() == "C4" {
 			return
 		}
 		tick := createTick(&p)
@@ -286,6 +289,14 @@ func TagDemo(demoPath string) string {
 
 		if e.Health <= 0 {
 			lastKillTick = p.CurrentFrame()
+		}
+
+		// check if the round has ended from a kill
+		if tick.GameState.AliveCT == 0 {
+			roundLive = false
+		}
+		if tick.GameState.AliveT == 0 && tick.GameState.BombTime == 0.0 {
+			roundLive = false
 		}
 	})
 
