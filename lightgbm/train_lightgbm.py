@@ -25,7 +25,7 @@ def train_lightgbm(train, val, num_trials):
     train_data = np.genfromtxt(train, delimiter=',', skip_header=1)
     val_data = np.genfromtxt(val, delimiter=',', skip_header=1)
 
-    feature_names = ['aliveCt','aliveT','bombPlanted','bombDefused','meanHealthCt','meanHealthT','meanValueCT','meanValueT','roundTime']
+    feature_names = ['aliveCt','aliveT','meanHealthCt','meanHealthT','meanValueCT','meanValueT','roundTime','bombTime','bombDefused']
 
     dtrain = lgb.Dataset(
         data=train_data[:,1:],
@@ -108,7 +108,7 @@ def objective(trial):
         valid_sets=[dvalid, dtrain],
         valid_names=['eval', 'train'],
         verbose_eval=False,
-        categorical_feature=['bombPlanted','bombDefused'],
+        categorical_feature=['bombDefused'],
         callbacks=[pruning_callback]
     )
 
