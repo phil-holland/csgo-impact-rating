@@ -428,18 +428,16 @@ func GetGameState(p *dem.Parser, startTick int, plantTick int, defuseTick int, h
 		state.MeanValueT = float64((*p).GameState().TeamTerrorists().CurrentEquipmentValue()) / float64(state.AliveT)
 	}
 
+	state.RoundTime = float64((*p).GameState().IngameTick()-startTick) / (*p).TickRate()
+
 	if plantTick > 0 {
 		// bomb has been planted
-		state.RoundTime = float64((*p).GameState().IngameTick()-plantTick) / (*p).TickRate()
-		state.BombPlanted = true
+		state.BombTime = float64((*p).GameState().IngameTick()-plantTick) / (*p).TickRate()
 
 		if defuseTick > 0 {
 			// bomb has been defused
 			state.BombDefused = true
 		}
-	} else {
-		state.RoundTime = float64((*p).GameState().IngameTick()-startTick) / (*p).TickRate()
-		state.BombPlanted = false
 	}
 
 	return state

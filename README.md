@@ -27,15 +27,15 @@ Impact Rating uses a machine learning model trained on a large amount of histori
 
 Internally, the state of a round at any given time is captured by the following features:
 
-- CT players alive `[0, 5]`
-- T players alive `[0, 5]`
-- Mean health of CT players `[0.0, 100.0]`
-- Mean health of T players `[0.0, 100.0]`
-- Mean value of CT equipment `[0.0, ∞]`
-- Mean value of T equipment `[0.0, ∞]`
-- Whether the bomb has been planted `[true, false]`
-- Whether the bomb has been defused `[true, false]` - *this is required to reward players for winning a round by defusing*
-- Round time elapsed (in seconds) `[0.0, 115.0]` - *following a bomb plant, this field represents the time elapsed since the plant, instead of since the round start*
+- CT players alive
+- T players alive
+- Mean health of CT players
+- Mean health of T players
+- Mean value of CT equipment
+- Mean value of T equipment
+- Whether the bomb has been defused  - *this is required to reward players for winning a round by defusing*
+- Round time elapsed (in seconds)
+- Bomb time elapsed (in seconds) - *this is zero before the bomb is planted*
 
 Inputs for each of these features are passed to the machine learning model, which returns a single floating-point value between `0.0` and `1.0` as the round winner prediction. The value can be directly interpreted as the probability that the round will be won by the T side. 
 
