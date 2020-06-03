@@ -30,6 +30,8 @@ func TagDemo(demoPath string) string {
 	var lastTScore int = -1
 	var lastCtScore int = -1
 	var matchFinished bool
+	var totalProblemsEncountered int = 0
+	var roundProblemsEncountered int = 0
 
 	// map from player id -> the id of the player who last flashed them (could be teammates)
 	var lastFlashedPlayer map[uint64]uint64 = make(map[uint64]uint64)
@@ -73,15 +75,16 @@ func TagDemo(demoPath string) string {
 		lastTScore = teamT.Score()
 		lastCtScore = teamCt.Score()
 
-		if tickBuffer != nil {
+		if tickBuffer != nil && roundProblemsEncountered == 0 {
 			output.Ticks = append(output.Ticks, tickBuffer...)
-			tickBuffer = nil
 			writeTaggedDemo(&output, demoPath+".tagged.json")
 		}
+		tickBuffer = nil
 
 		startTick = p.GameState().IngameTick()
 		plantTick = 0
 		defuseTick = 0
+		roundProblemsEncountered = 0
 
 		roundLive = true
 
@@ -260,7 +263,13 @@ func TagDemo(demoPath string) string {
 		// register any valid trade damage
 		if _, ok := lastDamageTick[e.Player.SteamID64]; ok {
 			for id, t := range lastDamageTick[e.Player.SteamID64] {
-				if float64(p.CurrentFrame()-t)*p.TickTime().Seconds() <= 2.0 && e.Attacker.SteamID64 != id {
+				if float64(p.CurrentFrame()-t)*p.TickTime().Seconds() <= 2.0 {
+					// don't tag trade damage from the same person who's attacking
+					if e.Attacker != nil {
+						if e.Attacker.SteamID64 == id {
+							continue
+						}
+					}
 					tick.Tags = append(tick.Tags, Tag{
 						Action: ActionTradeDamage,
 						Player: id,
@@ -282,11 +291,12 @@ func TagDemo(demoPath string) string {
 
 	// parse the demo file tick-by-tick - record any problem ticks, but keep
 	// parsing if any issues are encountered
-	problemsEncountered := 0
 	for ok, err := p.ParseNextFrame(); ok; ok, err = p.ParseNextFrame() {
 		if err != nil {
-			problemsEncountered++
-			continue
+			roundProblemsEncountered++
+			totalProblemsEncountered++
+
+			panic(err.Error())
 		}
 	}
 
@@ -299,9 +309,9 @@ func TagDemo(demoPath string) string {
 	bar.SetCurrent(100)
 	bar.Finish()
 
-	if problemsEncountered > 0 {
-		fmt.Printf("WARNING: %d unexpected issues were encountered whilst parsing the demo file - output may be incomplete.\n",
-			problemsEncountered)
+	if totalProblemsEncountered > 0 {
+		fmt.Printf("WARNING: %d unexpected issues were encountered whilst parsing the demo file - output may be missing data from some rounds.\n",
+			totalProblemsEncountered)
 	}
 
 	return demoPath + ".tagged.json"
