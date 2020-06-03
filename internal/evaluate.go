@@ -32,13 +32,13 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 	for idx, tick := range demo.Ticks {
 		input[idx*cols] = float64(tick.GameState.AliveCT)
 		input[idx*cols+1] = float64(tick.GameState.AliveT)
-		input[idx*cols+2] = bToF64(tick.GameState.BombDefused)
-		input[idx*cols+3] = float64(tick.GameState.MeanHealthCT)
-		input[idx*cols+4] = float64(tick.GameState.MeanHealthT)
-		input[idx*cols+5] = float64(tick.GameState.MeanValueCT)
-		input[idx*cols+6] = float64(tick.GameState.MeanValueT)
-		input[idx*cols+7] = float64(tick.GameState.RoundTime)
-		input[idx*cols+8] = float64(tick.GameState.BombTime)
+		input[idx*cols+2] = float64(tick.GameState.MeanHealthCT)
+		input[idx*cols+3] = float64(tick.GameState.MeanHealthT)
+		input[idx*cols+4] = float64(tick.GameState.MeanValueCT)
+		input[idx*cols+5] = float64(tick.GameState.MeanValueT)
+		input[idx*cols+6] = float64(tick.GameState.RoundTime)
+		input[idx*cols+7] = float64(tick.GameState.BombTime)
+		input[idx*cols+8] = bToF64(tick.GameState.BombDefused)
 	}
 
 	// load the lightgbm model in using leaves

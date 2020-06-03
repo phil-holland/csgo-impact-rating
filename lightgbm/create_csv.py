@@ -10,7 +10,7 @@ def create_csv(output, file):
     containing all round state fields for each tick."""
 
     # write the csv header
-    output.write('roundWinner,aliveCt,aliveT,bombPlanted,bombDefused,meanHealthCt,meanHealthT,meanValueCT,meanValueT,roundTime\n')
+    output.write('roundWinner,aliveCt,aliveT,meanHealthCt,meanHealthT,meanValueCT,meanValueT,roundTime,bombTime,bombDefused\n')
 
     for json_file in tqdm(file, desc='Processing'):
         # load in the json data
@@ -26,10 +26,10 @@ def create_csv(output, file):
             # write a single csv row
             row = (
                 str(tick['roundWinner']) + ',' + str(g['aliveCT']) + ',' +
-                str(g['aliveT']) + ',' + str(int(g['bombPlanted'])) + ',' +
-                str(int(g['bombDefused'])) + ',' + str(g['meanHealthCT']) + ',' + 
-                str(g['meanHealthT']) + ',' + str(g['meanValueCT']) + ',' + 
-                str(g['meanValueT']) + ',' + str(g['roundTime']) + '\n'
+                str(g['aliveT']) + ',' + str(g['meanHealthCT']) + ',' +
+                str(g['meanHealthT']) + ',' + str(g['meanValueCT']) + ',' +
+                str(g['meanValueT']) + ',' + str(g['roundTime']) + ',' +
+                str(g['bombTime']) + ',' + str(int(g['bombDefused'])) + '\n'
             )
             
             # don't write the row if it's a duplicate of the last
