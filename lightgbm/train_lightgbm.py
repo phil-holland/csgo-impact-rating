@@ -7,6 +7,7 @@ import optuna
 import lightgbm as lgb
 import numpy as np
 from shutil import copyfile
+from datetime import datetime
 
 train_data = None
 val_data = None
@@ -16,9 +17,8 @@ dvalid = None
 @click.command()
 @click.option('--train', '-t', type=click.Path(resolve_path=True, file_okay=True, dir_okay=False, exists=True), required=True)
 @click.option('--val', '-v', type=click.Path(resolve_path=True, file_okay=True, dir_okay=False, exists=True), required=True)
-@click.option('--pruning-warmup-rounds', '-w', type=int, default=50, show_default=True)
 @click.option('--num-trials', '-n', type=int, default=100, show_default=True)
-def train_lightgbm(train, val, pruning_warmup_rounds, num_trials):
+def train_lightgbm(train, val, num_trials):
     global train_data, val_data, dtrain, dvalid
 
     print('Loading data from csv files')
@@ -42,7 +42,7 @@ def train_lightgbm(train, val, pruning_warmup_rounds, num_trials):
     )
 
     if os.path.exists('./models'):
-        print('Removing past model files')
+        print('Removing old model files from ./models directory')
         files = glob.glob('./models/*')
         for f in files:
             os.remove(f)
@@ -50,9 +50,13 @@ def train_lightgbm(train, val, pruning_warmup_rounds, num_trials):
         print('Creating ./models directory')
         os.makedirs('./models')
 
+    if not os.path.exists('./studies'):
+        print('Creating ./studies directory')
+        os.makedirs('./studies')
+
     print('Starting Optuna study')
     study = optuna.create_study(
-        pruner=optuna.pruners.MedianPruner(n_warmup_steps=pruning_warmup_rounds), direction='maximize'
+        pruner=optuna.pruners.MedianPruner(n_warmup_steps=20), direction='maximize'
     )
     study.optimize(lambda trial: objective(trial), n_trials=num_trials)
 
@@ -63,6 +67,14 @@ def train_lightgbm(train, val, pruning_warmup_rounds, num_trials):
     print('  Params: ')
     for key, value in trial.params.items():
         print('    {}: {}'.format(key, value))
+
+    print('Writing study results to ./optuna_study.csv')
+    df = study.trials_dataframe()
+    df.to_csv('./optuna_study.csv')
+
+    out_study_file = './studies/optuna_study_{:%Y-%m-%d_%H-%M-%S}.csv'.format(datetime.now())
+    print('Copying study results to', out_study_file)
+    copyfile('./optuna_study.csv', out_study_file)
 
     print('Copying best performing LightGBM model file to ./LightGBM_model.txt')
     copyfile('./models/LightGBM_model_%03d.txt' % study.best_trial.number, './LightGBM_model.txt')
@@ -93,7 +105,6 @@ def objective(trial):
         param,
         dtrain,
         num_boost_round=250,
-        early_stopping_rounds=30,
         valid_sets=[dvalid, dtrain],
         valid_names=['eval', 'train'],
         verbose_eval=False,
@@ -104,7 +115,7 @@ def objective(trial):
     out_path = './models/LightGBM_model_%03d.txt' % trial.number
     print('Writing LightGBM model out to', out_path)
     print('Training AUC:\t', gbm.best_score['train']['auc'])
-    print('Evaluation AUC:\t', gbm.best_score['eval']['auc'])
+    print('Validation AUC:\t', gbm.best_score['eval']['auc'])
 
     with open(out_path, 'w') as f:
         f.write(gbm.model_to_string())

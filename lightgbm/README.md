@@ -8,4 +8,8 @@ The scripts contained in this directory are for data preprocessing, LightGBM mod
 
 ## Usage
 
-*TODO*
+### Creating Master CSV
+
+### Creating Training/Evaluation CSVs
+
+### Training an Optimal LightGBM Model
