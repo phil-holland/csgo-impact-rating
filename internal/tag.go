@@ -380,6 +380,7 @@ func GetGameState(p *dem.Parser, startTick int, plantTick int, defuseTick int, h
 
 	state.AliveCT = 0
 	state.MeanHealthCT = 0
+	state.MeanValueCT = 0
 	for _, ct := range (*p).GameState().TeamCounterTerrorists().Members() {
 		health := ct.Health()
 
@@ -392,14 +393,17 @@ func GetGameState(p *dem.Parser, startTick int, plantTick int, defuseTick int, h
 		if health > 0 {
 			state.AliveCT++
 			state.MeanHealthCT += float64(health)
+			state.MeanValueCT += float64(ct.EquipmentValueCurrent())
 		}
 	}
 	if state.AliveCT > 0 {
 		state.MeanHealthCT /= float64(state.AliveCT)
+		state.MeanValueCT /= float64(state.AliveCT)
 	}
 
 	state.AliveT = 0
 	state.MeanHealthT = 0
+	state.MeanValueT = 0
 	for _, t := range (*p).GameState().TeamTerrorists().Members() {
 		health := t.Health()
 
@@ -412,34 +416,26 @@ func GetGameState(p *dem.Parser, startTick int, plantTick int, defuseTick int, h
 		if health > 0 {
 			state.AliveT++
 			state.MeanHealthT += float64(health)
+			state.MeanValueT += float64(t.EquipmentValueCurrent())
 		}
 	}
 	if state.AliveT > 0 {
 		state.MeanHealthT /= float64(state.AliveT)
+		state.MeanValueT /= float64(state.AliveT)
 	}
 
-	state.MeanValueCT = 0
-	if state.AliveCT > 0 {
-		state.MeanValueCT = float64((*p).GameState().TeamCounterTerrorists().CurrentEquipmentValue()) / float64(state.AliveCT)
-	}
-
-	state.MeanValueT = 0
-	if state.AliveT > 0 {
-		state.MeanValueT = float64((*p).GameState().TeamTerrorists().CurrentEquipmentValue()) / float64(state.AliveT)
-	}
+	state.RoundTime = float64((*p).GameState().IngameTick()-startTick) / (*p).TickRate()
 
 	if plantTick > 0 {
 		// bomb has been planted
-		state.RoundTime = float64((*p).GameState().IngameTick()-plantTick) / (*p).TickRate()
-		state.BombPlanted = true
+		state.BombTime = float64((*p).GameState().IngameTick()-plantTick) / (*p).TickRate()
 
 		if defuseTick > 0 {
 			// bomb has been defused
 			state.BombDefused = true
 		}
 	} else {
-		state.RoundTime = float64((*p).GameState().IngameTick()-startTick) / (*p).TickRate()
-		state.BombPlanted = false
+		state.BombTime = 0.0
 	}
 
 	return state

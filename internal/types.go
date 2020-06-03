@@ -50,7 +50,7 @@ type GameState struct {
 	MeanValueCT  float64 `json:"meanValueCT"`
 	MeanValueT   float64 `json:"meanValueT"`
 	RoundTime    float64 `json:"roundTime"`
-	BombPlanted  bool    `json:"bombPlanted"`
+	BombTime     float64 `json:"bombTime"`
 	BombDefused  bool    `json:"bombDefused"`
 }
 

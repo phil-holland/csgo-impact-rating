@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"sort"
-	"strconv"
 	"strings"
 	"text/tabwriter"
 
@@ -33,13 +32,13 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 	for idx, tick := range demo.Ticks {
 		input[idx*cols] = float64(tick.GameState.AliveCT)
 		input[idx*cols+1] = float64(tick.GameState.AliveT)
-		input[idx*cols+2] = bToF64(tick.GameState.BombPlanted)
-		input[idx*cols+3] = bToF64(tick.GameState.BombDefused)
-		input[idx*cols+4] = float64(tick.GameState.MeanHealthCT)
-		input[idx*cols+5] = float64(tick.GameState.MeanHealthT)
-		input[idx*cols+6] = float64(tick.GameState.MeanValueCT)
-		input[idx*cols+7] = float64(tick.GameState.MeanValueT)
-		input[idx*cols+8] = float64(tick.GameState.RoundTime)
+		input[idx*cols+2] = bToF64(tick.GameState.BombDefused)
+		input[idx*cols+3] = float64(tick.GameState.MeanHealthCT)
+		input[idx*cols+4] = float64(tick.GameState.MeanHealthT)
+		input[idx*cols+5] = float64(tick.GameState.MeanValueCT)
+		input[idx*cols+6] = float64(tick.GameState.MeanValueT)
+		input[idx*cols+7] = float64(tick.GameState.RoundTime)
+		input[idx*cols+8] = float64(tick.GameState.BombTime)
 	}
 
 	// load the lightgbm model in using leaves
@@ -109,7 +108,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 			pred = 0.0
 		}
 		// amend the prediction if no Ts are alive and the bomb is not planted - certain CT win
-		if !tick.GameState.BombPlanted && tick.GameState.AliveT == 0 {
+		if tick.GameState.BombTime == 0.0 && tick.GameState.AliveT == 0 {
 			pred = 0.0
 		}
 
@@ -176,6 +175,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 			}
 
 			if flashingPlayer != 0 {
+				// TODO: share impact with hurt impact if this is a teamflash
 				if teamIds[flashingPlayer] == tick.TeamCT.ID {
 					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
@@ -471,32 +471,4 @@ func bToF64(b bool) float64 {
 		return 1.0
 	}
 	return 0.0
-}
-
-func makeCSVLine(tick *Tick) string {
-	roundWinner := strconv.FormatInt(int64(tick.RoundWinner), 10)
-
-	aliveCt := strconv.FormatInt(int64(tick.GameState.AliveCT), 10)
-	aliveT := strconv.FormatInt(int64(tick.GameState.AliveT), 10)
-
-	bombDefused := "0"
-	if tick.GameState.BombDefused {
-		bombDefused = "1"
-	}
-
-	bombPlanted := "0"
-	if tick.GameState.BombPlanted {
-		bombPlanted = "1"
-	}
-
-	meanHealthCt := strconv.FormatFloat(tick.GameState.MeanHealthCT, 'f', 4, 64)
-	meanHealthT := strconv.FormatFloat(tick.GameState.MeanHealthT, 'f', 4, 64)
-
-	meanValueCt := strconv.FormatFloat(tick.GameState.MeanValueCT, 'f', 4, 64)
-	meanValueT := strconv.FormatFloat(tick.GameState.MeanValueT, 'f', 4, 64)
-
-	roundTime := strconv.FormatFloat(tick.GameState.RoundTime, 'f', 4, 64)
-
-	return (roundWinner + "," + aliveCt + "," + aliveT + "," + bombDefused + "," + bombPlanted +
-		"," + meanHealthCt + "," + meanHealthT + "," + meanValueCt + "," + meanValueT + "," + roundTime)
 }
