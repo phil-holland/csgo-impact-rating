@@ -6,15 +6,15 @@
 
 ---
 
-[![Latest release](https://img.shields.io/github/v/release/Phil-Holland/csgo-impact-rating?label=Release&sort=semver)](https://github.com/Phil-Holland/csgo-impact-rating/releases)
+[![Latest release](https://img.shields.io/github/v/release/Phil-Holland/csgo-impact-rating?label=release&sort=semver)](https://github.com/Phil-Holland/csgo-impact-rating/releases)
 [![Build Status](https://travis-ci.org/Phil-Holland/csgo-impact-rating.svg?branch=master)](https://travis-ci.org/Phil-Holland/csgo-impact-rating)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Phil-Holland/csgo-impact-rating)](https://goreportcard.com/report/github.com/Phil-Holland/csgo-impact-rating)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating?ref=badge_shield)
 
 <p align="center">
   <img src="https://i.imgur.com/EBbyDLv.png" />
-  <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#usage'>Usage</a> • <a href='#built-with'>Built With</a> • <a href='#donate'>Donate</a>
+  <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#usage'>Usage</a> • <a href='#built-with'>Built With</a> • <a href='#donate'>Donate</a> • <a href='#license'>License</a>
 </p>
 
 ## How it Works
@@ -117,4 +117,5 @@ CS:GO Impact Rating is completely free to use, but any donations are incredibly 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/PhilHolland)
 
 ## License
+
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating?ref=badge_large)
