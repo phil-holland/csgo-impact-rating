@@ -21,9 +21,13 @@
 
 Impact Rating uses a machine learning model trained on a large amount of historical data to **predict the probable winner** of a given CS:GO round, based on the current state of the round. A **player's Impact Rating** is then calculated as the amount by which their actions shift the likelihood of their team winning the round. Therefore, **players are rewarded purely for making plays that improve their team's chance of winning the current round**. Conversely, negative Impact Rating is given when a player's actions reduce their team's chance of winning the round.
 
-> Two simplified examples of in-game scenarios are shown in the diagram below. Both describe a single CT player getting a triple kill, but they only receive impact rating in one scenario. In the first, the CTs are left in a 5v2 situation in which they are highly favoured to subsequently win the round. In the second, the remaining CTs are forfeiting the round, not attempting a late retake. A triple kill at this point **does not alter the CT team's chance of winning the round**.
->
-> ![](https://i.imgur.com/vEMUxnD.png)
+### Example
+
+Two simplified examples of in-game scenarios are shown in the diagram below. Both describe a single CT player getting a triple kill, but they only receive impact rating in one scenario. In the first, the CTs are left in a 5v2 situation in which they are highly favoured to subsequently win the round. In the second, the remaining CTs are forfeiting the round, not attempting a late retake. A triple kill at this point **does not alter the CT team's chance of winning the round**.
+
+![](https://i.imgur.com/vEMUxnD.png)
+
+### Calculating Impact Rating
 
 Internally, the state of a round at any given time is captured by the following features:
 
@@ -52,7 +56,6 @@ This concept is applied to **every change in a round's state** from the end of f
 
 > It is important to note that some actions may result in negative Impact Rating being "rewarded". For example, sustaining a large amount of damage may shift the round outcome prediction in the favour of your opponents, and therefore you should be punished with the corresponding negative Impact Rating. This also applies to team damage, or if a teammate takes damage after you teamflash them.
 
-
 ## Prediction Model
 
 Whilst the concept behind Impact Rating can in theory be implemented using any binary classification model, the code here has been written to target the [LightGBM framework](https://github.com/Microsoft/LightGBM). This is a framework used for gradient boosting decision trees (GBDT), and has been [shown to perform very well](https://github.com/microsoft/LightGBM/blob/master/docs/Experiments.rst) in binary classification problems. It has also been chosen for its lightweight nature, and ease of installation.
@@ -63,7 +66,7 @@ The latest Impact Rating distribution for your system can be downloaded from thi
 
 <p align="center">
   <a href="https://github.com/Phil-Holland/csgo-impact-rating/releases/latest">
-    <img src="https://i.imgur.com/h72HF01.png" />
+    <b>Download Latest Version</b>
   </a>
 </p>
 
@@ -112,7 +115,9 @@ A full per-player Impact Rating report will be shown in the console output.
 
 ## Donate
 
-CS:GO Impact Rating is completely free to use, but any donations are incredibly appreciated! Buy me a coffee with the following link:
+CS:GO Impact Rating is completely free to use, so any donations are incredibly appreciated! 
+
+Buy me a coffee with the following link:
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/PhilHolland)
 

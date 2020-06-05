@@ -3,7 +3,7 @@ package internal
 const (
 	// Version denotes the current application version (following semantic
 	// versioning)
-	Version string = "0.6.0"
+	Version string = "0.7.0"
 
 	// TickRoundStart denotes the tick at the very start of the round
 	// (after freezetime)
