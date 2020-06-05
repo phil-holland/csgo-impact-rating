@@ -122,13 +122,11 @@ func TagDemo(demoPath string) string {
 	})
 
 	p.RegisterEventHandler(func(e events.BombPlanted) {
-		if matchFinished {
+		if matchFinished || !IsLive(&p) || !roundLive {
 			return
 		}
 
-		if IsLive(&p) {
-			plantTick = p.GameState().IngameTick()
-		}
+		plantTick = p.GameState().IngameTick()
 
 		tick := createTick(&p)
 		tick.Type = TickBombPlant

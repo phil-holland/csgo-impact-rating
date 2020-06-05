@@ -1,4 +1,6 @@
 models
+trials
+studies
 *.csv
 *.txt
 *.conf
