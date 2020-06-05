@@ -10,7 +10,6 @@
 [![Build Status](https://travis-ci.org/Phil-Holland/csgo-impact-rating.svg?branch=master)](https://travis-ci.org/Phil-Holland/csgo-impact-rating)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Phil-Holland/csgo-impact-rating)](https://goreportcard.com/report/github.com/Phil-Holland/csgo-impact-rating)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating?ref=badge_shield)
 
 <p align="center">
   <img src="https://i.imgur.com/EBbyDLv.png" />
@@ -126,7 +125,3 @@ CS:GO Impact Rating is completely free to use, so any donations are incredibly a
 Buy me a coffee with the following link:
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/PhilHolland)
-
-## License
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FPhil-Holland%2Fcsgo-impact-rating?ref=badge_large)
