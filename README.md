@@ -19,7 +19,7 @@
 
 ## How it Works
 
-Impact Rating uses a machine learning model trained on a large amount of historical data to **predict the probable winner** of a given CS:GO round, based on the current state of the round. A **player's Impact Rating** is then calculated as the amount by which their actions shift the likelihood of their team winning the round. Therefore, **players are rewarded purely for making plays that improve their team's chance of winning the current round**. Conversely, negative Impact Rating is given when a player's actions reduce their team's chance of winning the round.
+Impact Rating uses a machine learning model trained on a large amount of historical data to **predict the probable winner** of a given CS:GO round, based on the current state of the round. A **player's Impact Rating** is then calculated as the amount by which their actions shift the predicted likelihood of their team winning the round. Therefore, **players are rewarded purely for making plays that improve their team's chance of winning the current round**. Conversely, negative Impact Rating is given when a player's actions reduce their team's chance of winning the round.
 
 ### Example
 
@@ -29,7 +29,7 @@ Two simplified examples of in-game scenarios are shown in the diagram below. Bot
 
 ### Case Study
 
-An in-depth case study analysis of an individual match between Mousesports and Faze can be found here: [case study](https://nbviewer.jupyter.org/github/Phil-Holland/csgo-impact-rating/blob/master/notebooks/case_study.ipynb). This analysis breaks down the events of a round, showing how model prediction values change accordingly, and the resulting effect on player Impact Ratings.
+An in-depth case study analysis of an individual match between Mousesports and Faze can be found here: [case study](https://mybinder.org/v2/gh/Phil-Holland/csgo-impact-rating/master?filepath=analysis%2F02-case_study.ipynb). This analysis breaks down the events of a round, showing how model prediction values change accordingly, and the resulting effect on player Impact Ratings.
 
 ### Calculating Impact Rating
 
