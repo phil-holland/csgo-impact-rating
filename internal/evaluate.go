@@ -115,7 +115,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 		// append to the round outcome prediction slice
 		ratingOutput.RoundOutcomePredictions = append(ratingOutput.RoundOutcomePredictions, RoundOutcomePrediction{
 			Tick:              tick.Tick,
-			Round:             roundsPlayed,
+			Round:             Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 			OutcomePrediction: pred,
 		})
 
@@ -125,6 +125,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 		switch tick.Type {
 		case TickDamage:
 			var flashingPlayer uint64
+			var teamFlash bool
 			var damagingPlayer uint64
 			var hurtingPlayer uint64
 			var tradedPlayers []uint64
@@ -141,12 +142,22 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				}
 			}
 
+			if flashingPlayer != 0 {
+				// was this a teamflash?
+				if teamIds[flashingPlayer] == teamIds[hurtingPlayer] {
+					teamFlash = true
+				}
+			}
+
 			splitChange := change
-			if flashingPlayer != 0 && damagingPlayer != 0 && len(tradedPlayers) > 0 {
+			if flashingPlayer != 0 && !teamFlash && damagingPlayer != 0 && len(tradedPlayers) > 0 {
+				// flash assist + trade damage
 				splitChange /= 3.0
 			} else if damagingPlayer != 0 && len(tradedPlayers) > 0 {
+				// just trade damage
 				splitChange /= 2.0
-			} else if flashingPlayer != 0 && damagingPlayer != 0 {
+			} else if flashingPlayer != 0 && !teamFlash && damagingPlayer != 0 {
+				// just flash assist
 				splitChange /= 2.0
 			}
 
@@ -154,7 +165,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				if teamIds[damagingPlayer] == tick.TeamCT.ID {
 					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
-						Round:  roundsPlayed,
+						Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 						Player: damagingPlayer,
 						Change: splitChange,
 						Action: ActionDamage,
@@ -164,7 +175,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				} else if teamIds[damagingPlayer] == tick.TeamT.ID {
 					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
-						Round:  roundsPlayed,
+						Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 						Player: damagingPlayer,
 						Change: -splitChange,
 						Action: ActionDamage,
@@ -174,12 +185,11 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				}
 			}
 
-			if flashingPlayer != 0 {
-				// TODO: share impact with hurt impact if this is a teamflash
+			if flashingPlayer != 0 && !teamFlash {
 				if teamIds[flashingPlayer] == tick.TeamCT.ID {
 					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
-						Round:  roundsPlayed,
+						Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 						Player: flashingPlayer,
 						Change: splitChange,
 						Action: ActionFlashAssist,
@@ -189,7 +199,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				} else if teamIds[flashingPlayer] == tick.TeamT.ID {
 					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
-						Round:  roundsPlayed,
+						Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 						Player: flashingPlayer,
 						Change: -splitChange,
 						Action: ActionFlashAssist,
@@ -204,7 +214,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				if teamIds[tp] == tick.TeamCT.ID {
 					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
-						Round:  roundsPlayed,
+						Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 						Player: tp,
 						Change: avgChange,
 						Action: ActionTradeDamage,
@@ -214,7 +224,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				} else if teamIds[tp] == tick.TeamT.ID {
 					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
-						Round:  roundsPlayed,
+						Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 						Player: tp,
 						Change: -avgChange,
 						Action: ActionTradeDamage,
@@ -225,26 +235,56 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 			}
 
 			if hurtingPlayer != 0 {
+				splitChange := change
+				if flashingPlayer != 0 && teamFlash {
+					// player was teamflashed
+					splitChange /= 2.0
+				}
+
 				if teamIds[hurtingPlayer] == tick.TeamCT.ID {
 					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
-						Round:  roundsPlayed,
+						Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 						Player: hurtingPlayer,
-						Change: change,
+						Change: splitChange,
 						Action: ActionHurt,
 					})
-					ratings[hurtingPlayer] += change
-					hurtRatings[hurtingPlayer] += change
+					ratings[hurtingPlayer] += splitChange
+					hurtRatings[hurtingPlayer] += splitChange
 				} else if teamIds[hurtingPlayer] == tick.TeamT.ID {
 					ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 						Tick:   tick.Tick,
-						Round:  roundsPlayed,
+						Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 						Player: hurtingPlayer,
-						Change: -change,
+						Change: -splitChange,
 						Action: ActionHurt,
 					})
-					ratings[hurtingPlayer] -= change
-					hurtRatings[hurtingPlayer] -= change
+					ratings[hurtingPlayer] -= splitChange
+					hurtRatings[hurtingPlayer] -= splitChange
+				}
+
+				if flashingPlayer != 0 && teamFlash {
+					if teamIds[flashingPlayer] == tick.TeamCT.ID {
+						ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
+							Tick:   tick.Tick,
+							Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
+							Player: flashingPlayer,
+							Change: splitChange,
+							Action: ActionFlashAssist,
+						})
+						ratings[flashingPlayer] += splitChange
+						flashAssistRatings[flashingPlayer] += splitChange
+					} else if teamIds[flashingPlayer] == tick.TeamT.ID {
+						ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
+							Tick:   tick.Tick,
+							Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
+							Player: flashingPlayer,
+							Change: -splitChange,
+							Action: ActionFlashAssist,
+						})
+						ratings[flashingPlayer] -= splitChange
+						flashAssistRatings[flashingPlayer] -= splitChange
+					}
 				}
 			}
 		case TickBombDefuse:
@@ -263,7 +303,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				// player has to be a ct
 				ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 					Tick:   tick.Tick,
-					Round:  roundsPlayed,
+					Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 					Player: defusingPlayer,
 					Change: change,
 					Action: ActionDefuse,
@@ -277,7 +317,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				// player has to be a t
 				ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
 					Tick:   tick.Tick,
-					Round:  roundsPlayed,
+					Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
 					Player: dop,
 					Change: -avgChange,
 					Action: ActionDefusedOn,
@@ -346,9 +386,9 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 			roundHurtRatings[change.Player] += change.Change
 		}
 
-		if idx == len(ratingOutput.RatingChanges)-1 || ratingOutput.RatingChanges[idx+1].Round >= currentRound+1 {
+		if idx == len(ratingOutput.RatingChanges)-1 || ratingOutput.RatingChanges[idx+1].Round.Number >= currentRound+1 {
 			if verbosity >= 2 {
-				fmt.Printf("\n> Round %d:\n\n", currentRound)
+				fmt.Printf("\n> Round %d [%d:%d]\n\n", currentRound, change.Round.ScoreCT, change.Round.ScoreT)
 				fmt.Fprintln(tabWriter, "Player \t Round Impact (%) \t|\t Damage (%) \t Flash Assists (%) \t Trade Damage (%) \t Defuses (%) \t Defuses On (%) \t Damage Recv. (%)")
 				fmt.Fprintln(tabWriter, "------ \t ---------------- \t|\t ---------- \t ----------------- \t ---------------- \t ----------- \t -------------- \t ----------------")
 			}
@@ -359,7 +399,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 					playerRoundRatings[id] = make([]RoundRating, 0)
 				}
 				playerRoundRatings[id] = append(playerRoundRatings[id], RoundRating{
-					Round:       currentRound,
+					Round:       Round{Number: currentRound, ScoreCT: change.Round.ScoreCT, ScoreT: change.Round.ScoreT},
 					TotalRating: roundRatings[id],
 					RatingBreakdown: RatingBreakdown{
 						DamageRating:      roundDamageRatings[id],

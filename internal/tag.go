@@ -13,7 +13,7 @@ import (
 )
 
 // TagDemo processes the input demo file, creating a '.tagged.json' file in the same directory
-// TODO: take in output path as a parameter
+// TODO: take in output path as a parameter to enable easier testing
 func TagDemo(demoPath string) string {
 	var output TaggedDemo = TaggedDemo{
 		TaggedDemoMetadata: TaggedDemoMetadata{

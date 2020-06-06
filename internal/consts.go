@@ -58,4 +58,6 @@ const (
 	// ActionDefusedOn represents a T player being alive when the bomb gets
 	// defused
 	ActionDefusedOn string = "defusedOn"
+
+	// TODO: add "alive" action, denoting a player simply being alive - rewards playing time/punishes saving
 )

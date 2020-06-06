@@ -87,17 +87,24 @@ type PlayerRating struct {
 // RatingChange holds data describing an individual rating change
 type RatingChange struct {
 	Tick   int     `json:"tick"`
-	Round  int     `json:"round"`
+	Round  Round   `json:"round"`
 	Player uint64  `json:"player"`
 	Change float64 `json:"change"`
 	Action string  `json:"action"`
+}
+
+// Round holds helper data describing a single round
+type Round struct {
+	Number  int `json:"number"`
+	ScoreCT int `json:"scoreCT"`
+	ScoreT  int `json:"scoreT"`
 }
 
 // RoundOutcomePrediction holds data describing the round outcome prediction
 // at a specific tick
 type RoundOutcomePrediction struct {
 	Tick              int     `json:"tick"`
-	Round             int     `json:"round"`
+	Round             Round   `json:"round"`
 	OutcomePrediction float64 `json:"outcomePrediction"`
 }
 
@@ -109,7 +116,7 @@ type OverallRating struct {
 
 // RoundRating holds single-round rating summary data for a single player
 type RoundRating struct {
-	Round           int             `json:"round"`
+	Round           Round           `json:"round"`
 	TotalRating     float64         `json:"totalRating"`
 	RatingBreakdown RatingBreakdown `json:"ratingBreakdown"`
 }
