@@ -13,6 +13,7 @@
 
 <p align="center">
   <img src="https://i.imgur.com/EBbyDLv.png" />
+  <br>
   <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#usage'>Usage</a> • <a href='#built-with'>Built With</a> • <a href='#donate'>Donate</a> • <a href='#license'>License</a>
 </p>
 
@@ -63,7 +64,7 @@ This concept is applied to **every change in a round's state** from the end of f
 
 Whilst the concept behind Impact Rating can in theory be implemented using any binary classification model, the code here has been written to target the [LightGBM framework](https://github.com/Microsoft/LightGBM). This is a framework used for gradient boosting decision trees (GBDT), and has been [shown to perform very well](https://github.com/microsoft/LightGBM/blob/master/docs/Experiments.rst) in binary classification problems. It has also been chosen for its lightweight nature, and ease of installation.
 
-Model analysis and instructions for how to train a new model can be found here: [model training & analysis](lightgbm/README.md).
+Model analysis and instructions for how to train a new model can be found here: [model training & analysis](analysis/README.md).
 
 ## Download
 

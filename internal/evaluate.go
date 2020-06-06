@@ -41,7 +41,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 		input[idx*cols+8] = bToF64(tick.GameState.BombDefused)
 	}
 
-	// load the lightgbm model in using leaves
+	// load the LightGBM model in using leaves
 	fmt.Printf("Loading LightGBM model from \"%s\"\n", modelPath)
 	model, err := leaves.LGEnsembleFromFile(modelPath, true)
 	if err != nil {
