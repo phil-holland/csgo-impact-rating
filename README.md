@@ -29,7 +29,7 @@ Two simplified examples of in-game scenarios are shown in the diagram below. Bot
 
 ### Case Study
 
-An in-depth case study analysis of an individual match between Mousesports and Faze can be found here: [case study](https://mybinder.org/v2/gh/Phil-Holland/csgo-impact-rating/master?filepath=analysis%2F02-case_study.ipynb). This analysis breaks down the events of a round, showing how model prediction values change accordingly, and the resulting effect on player Impact Ratings.
+An in-depth case study analysis of an individual match between Mousesports and Faze can be found here: [case study](https://nbviewer.jupyter.org/github/Phil-Holland/csgo-impact-rating/blob/master/analysis/02-case_study.ipynb). This analysis breaks down the events of a round, showing how model prediction values change accordingly, and the resulting effect on player Impact Ratings.
 
 ### Calculating Impact Rating
 
