@@ -101,12 +101,18 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 		// get the prediction for this tick
 		pred := preds[idx]
 
-		// amend the prediction if this is a round end tick - this fixes any issues
-		// with "alive" actions
+		// amend the prediction if this is a time expired tick
 		if tick.Type == TickTimeExpired {
 			if tick.RoundWinner == 0 {
+				// should never be anything different, but make sure
 				pred = 0.0
-			} else if tick.RoundWinner == 1 {
+			}
+		}
+
+		// amend the prediction if this is a bomb explode tick
+		if tick.Type == TickBombExplode {
+			if tick.RoundWinner == 1 {
+				// should never be anything different, but make sure
 				pred = 1.0
 			}
 		}
