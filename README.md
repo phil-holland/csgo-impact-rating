@@ -45,38 +45,40 @@ Internally, the state of a round at any given time is captured by the following 
 - Round time elapsed (in seconds)
 - Bomb time elapsed (in seconds) - *this is zero before the bomb is planted*
 
-Inputs for each of these features are passed to the machine learning model, which returns a single floating-point value between `0.0` and `1.0` as the round winner prediction. The value can be directly interpreted as the probability that the round will be won by the T side. 
+Inputs for each of these features are passed to the machine learning model, which returns a single non-integer value between `0.0` and `1.0` as the round winner prediction. This value can be directly interpreted as the **probability** that the round will be won by the **T-side**. 
 
-> For example, a returned value of `0.34` represents a predicted **34% chance** of a **T side** round win, and a **66% chance** of a **CT side** round win.
+> For example, a returned value of `0.34` represents a predicted **34% chance** of a **T-side** round win, and a **66% chance** of a **CT-side** round win.
 
-This concept is applied to **every change in a round's state** from the end of freezetime to the moment the round is won. Players that contributed to changing the round outcome prediction are rewarded with a **appropriate share of the percentage change** in their team's favour - the **sum of these values** over a particular round is their Impact Rating for that round. The following actions are considered when rewarding players with their share:
+This concept is applied to **every in-game event that causes a round's state to change** from the end of freezetime to the moment the round is won. Players that contributed to changing the round outcome prediction are rewarded with a **appropriate share of the percentage change** in their team's favour - the **sum of these values** over a particular round is their Impact Rating for that round.
+
+The following action categories are considered when rewarding players with their share:
 
 - **Dealing damage**
-  - This rewards players who reduce the average health of, or the number of players alive on the other team
+  - This rewards players who damage an opponent's health
   - This also punishes players for team-damage
 - **Trade damage** *(if an opponent takes damage very soon after they themselves have damaged the player in question)*
-  - This rewards players who get traded by their teammate
+  - This rewards players for taking damage so that a teammate can damage their attacker
 - **Flash assist damage** *(if someone takes damage whilst blinded by a flashbang thrown by the player in question)*
   - This rewards players for flashing an enemy who then sustains damage
   - This also punishes players for team-flashing their teammate into taking damage
 - **Successfully retaking**
   - This rewards players who win rounds by retaking and defusing the bomb - all living CTs are rewarded when the bomb is defused
   - This also punishes T-side players who cannot prevent a defuse whilst alive
-- **Sustaining damage (being hurt)**
-  - This punishes players who reduce the average health of, or the number of players alive on their own team
+- **Sustaining damage** *(being hurt)*
+  - This punishes players who take damage themselves
 - **Being alive at the end of a round** *(after time has run out or the bomb has exploded)*
   - This rewards players for forcing their opponent to save
   - This also punishes players for saving
 
 ## Prediction Model
 
-Whilst the concept behind Impact Rating can in theory be implemented using any binary classification model, the code here has been written to target the [LightGBM framework](https://github.com/Microsoft/LightGBM). This is a framework used for gradient boosting decision trees (GBDT), and has been [shown to perform very well](https://github.com/microsoft/LightGBM/blob/master/docs/Experiments.rst) in binary classification problems. It has also been chosen for its lightweight nature, and ease of installation.
+Whilst the machine learning aspect of Impact Rating can in theory be implemented using any binary classification model, the code here has been written to target the [LightGBM framework](https://github.com/Microsoft/LightGBM). This is a framework used for gradient boosting decision trees (GBDT), and has been [shown to perform very well](https://github.com/microsoft/LightGBM/blob/master/docs/Experiments.rst) in binary classification problems. It has also been chosen for its lightweight nature, and ease of installation.
 
 Model analysis and instructions for how to train a new model can be found here: [model analysis](analysis/README.md).
 
 ## Download
 
-The latest Impact Rating distribution for your system can be downloaded from this Github project's release page (for 99% of Windows users, download the `csgo-impact-rating_win64.zip` file).
+The latest Impact Rating distribution for your system can be downloaded from this Github project's release page (for 99% of Windows users, this means downloading the `csgo-impact-rating_win64.zip` file).
 
 <p align="center">
   <a href="https://github.com/Phil-Holland/csgo-impact-rating/releases/latest" style="font-size: 1.25em">
@@ -200,3 +202,4 @@ All calculated statistics are saved to a *"rating file"* with the extension `.ra
 - [pflag](https://github.com/spf13/pflag) - used to build the command line interface
 - [pb (v3)](https://github.com/cheggaaa/pb) - used for progress visualisation
 - [LightGBM](https://github.com/Microsoft/LightGBM) - used for model training/round outcome prediction
+- [Optuna](https://optuna.org/) - used for hyperparameter optimisation during training
