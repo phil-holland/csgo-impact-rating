@@ -14,7 +14,7 @@
 <p align="center">
   <img src="https://i.imgur.com/EBbyDLv.png" />
   <br>
-  <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#usage'>Usage</a> • <a href='#built-with'>Built With</a> • <a href='#donate'>Donate</a> • <a href='#license'>License</a>
+  <a href='#how-it-works'>How it Works</a> • <a href='#prediction-model'>Prediction Model</a> • <a href='#download'>Download</a> • <a href='#usage'>Usage</a> • <a href='#built-with'>Built With</a>
 </p>
 
 ## How it Works
