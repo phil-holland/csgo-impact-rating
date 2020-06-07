@@ -66,6 +66,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 	defuseRatings := make(map[uint64]float64)
 	defusedOnRatings := make(map[uint64]float64)
 	hurtRatings := make(map[uint64]float64)
+	aliveRatings := make(map[uint64]float64)
 	names := make(map[uint64]string)
 	ids := make(map[string]uint64)
 	teamIds := make(map[uint64]int)
@@ -85,6 +86,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				defuseRatings[player.SteamID] = 0.0
 				defusedOnRatings[player.SteamID] = 0.0
 				hurtRatings[player.SteamID] = 0.0
+				aliveRatings[player.SteamID] = 0.0
 				names[player.SteamID] = player.Name
 				ids[player.Name] = player.SteamID
 			}
@@ -99,17 +101,14 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 		// get the prediction for this tick
 		pred := preds[idx]
 
-		// amend the prediction if no CTs are alive - certain T win
-		if tick.GameState.AliveCT == 0 {
-			pred = 1.0
-		}
-		// amend the prediction if the bomb has been defused - certain ct win
-		if tick.GameState.BombDefused {
-			pred = 0.0
-		}
-		// amend the prediction if no Ts are alive and the bomb is not planted - certain CT win
-		if tick.GameState.BombTime == 0.0 && tick.GameState.AliveT == 0 {
-			pred = 0.0
+		// amend the prediction if this is a round end tick - this fixes any issues
+		// with "alive" actions
+		if tick.Type == TickTimeExpired {
+			if tick.RoundWinner == 0 {
+				pred = 0.0
+			} else if tick.RoundWinner == 1 {
+				pred = 1.0
+			}
 		}
 
 		// append to the round outcome prediction slice
@@ -325,6 +324,45 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				ratings[dop] -= avgChange
 				defusedOnRatings[dop] -= avgChange
 			}
+		default:
+			var alivePlayersCT []uint64
+			var alivePlayersT []uint64
+
+			for _, tag := range tick.Tags {
+				if tag.Action == ActionAlive {
+					if teamIds[tag.Player] == tick.TeamCT.ID {
+						alivePlayersCT = append(alivePlayersCT, tag.Player)
+					} else if teamIds[tag.Player] == tick.TeamT.ID {
+						alivePlayersT = append(alivePlayersT, tag.Player)
+					}
+				}
+			}
+
+			avgChangeCT := change / float64(len(alivePlayersCT))
+			avgChangeT := change / float64(len(alivePlayersT))
+			for _, ap := range alivePlayersCT {
+				ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
+					Tick:   tick.Tick,
+					Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
+					Player: ap,
+					Change: avgChangeCT,
+					Action: ActionAlive,
+				})
+				ratings[ap] += avgChangeCT
+				aliveRatings[ap] += avgChangeCT
+			}
+
+			for _, ap := range alivePlayersT {
+				ratingOutput.RatingChanges = append(ratingOutput.RatingChanges, RatingChange{
+					Tick:   tick.Tick,
+					Round:  Round{Number: roundsPlayed, ScoreCT: tick.ScoreCT, ScoreT: tick.ScoreT},
+					Player: ap,
+					Change: -avgChangeT,
+					Action: ActionAlive,
+				})
+				ratings[ap] -= avgChangeT
+				aliveRatings[ap] -= avgChangeT
+			}
 		}
 
 		lastPred = pred
@@ -346,6 +384,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 	roundDefuseRatings := make(map[uint64]float64)
 	roundDefusedOnRatings := make(map[uint64]float64)
 	roundHurtRatings := make(map[uint64]float64)
+	roundAliveRatings := make(map[uint64]float64)
 	playerRoundRatings := make(map[uint64]([]RoundRating))
 
 	for k := range names {
@@ -357,6 +396,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 		roundDefuseRatings[k] = 0.0
 		roundDefusedOnRatings[k] = 0.0
 		roundHurtRatings[k] = 0.0
+		roundAliveRatings[k] = 0.0
 	}
 
 	bestRoundRating := 0.0
@@ -384,13 +424,15 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 			roundDefusedOnRatings[change.Player] += change.Change
 		case ActionHurt:
 			roundHurtRatings[change.Player] += change.Change
+		case ActionAlive:
+			roundAliveRatings[change.Player] += change.Change
 		}
 
 		if idx == len(ratingOutput.RatingChanges)-1 || ratingOutput.RatingChanges[idx+1].Round.Number >= currentRound+1 {
 			if verbosity >= 2 {
 				fmt.Printf("\n> Round %d [%d:%d]\n\n", currentRound, change.Round.ScoreCT, change.Round.ScoreT)
-				fmt.Fprintln(tabWriter, "Player \t Round Impact (%) \t|\t Damage (%) \t Flash Assists (%) \t Trade Damage (%) \t Defuses (%) \t Defuses On (%) \t Damage Recv. (%)")
-				fmt.Fprintln(tabWriter, "------ \t ---------------- \t|\t ---------- \t ----------------- \t ---------------- \t ----------- \t -------------- \t ----------------")
+				fmt.Fprintln(tabWriter, "Player \t Round Impact (%) \t|\t Damage (%) \t Flash Assists (%) \t Trade Damage (%) \t Defuses (%) \t Defuses On (%) \t Damage Recv. (%) \t Alive (%)")
+				fmt.Fprintln(tabWriter, "------ \t ---------------- \t|\t ---------- \t ----------------- \t ---------------- \t ----------- \t -------------- \t ---------------- \t ---------")
 			}
 			for _, name := range playerNames {
 				id := ids[name]
@@ -407,6 +449,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 						TradeDamageRating: roundTradeDamageRatings[id],
 						DefuseRating:      roundDefuseRatings[id],
 						HurtRating:        roundHurtRatings[id],
+						AliveRating:       roundAliveRatings[id],
 					},
 				})
 
@@ -417,9 +460,10 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				der := 100.0 * roundDefuseRatings[id]
 				deor := 100.0 * roundDefusedOnRatings[id]
 				hr := 100.0 * roundHurtRatings[id]
+				ar := 100.0 * roundAliveRatings[id]
 				if verbosity >= 2 {
-					fmt.Fprintf(tabWriter, "%s \t %.3f \t|\t %.3f \t %.3f \t %.3f \t %.3f \t %.3f \t %.3f\n",
-						name, r, dr, far, tdr, der, deor, hr)
+					fmt.Fprintf(tabWriter, "%s \t %.3f \t|\t %.3f \t %.3f \t %.3f \t %.3f \t %.3f \t %.3f \t %.3f\n",
+						name, r, dr, far, tdr, der, deor, hr, ar)
 				}
 				if r > bestRoundRating {
 					bestRoundRating = r
@@ -438,6 +482,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 				roundDefuseRatings[id] = 0.0
 				roundDefusedOnRatings[id] = 0.0
 				roundHurtRatings[id] = 0.0
+				roundAliveRatings[id] = 0.0
 			}
 			currentRound++
 			tabWriter.Flush()
@@ -446,8 +491,8 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 
 	if verbosity >= 1 {
 		fmt.Printf("\n> Overall:\n\n")
-		fmt.Fprintln(tabWriter, "Player \t Average Impact (%) \t|\t Damage (%) \t Flash Assists (%) \t Trade Damage (%) \t Defuses (%) \t Defuses On (%) \t Damage Recv. (%)")
-		fmt.Fprintln(tabWriter, "------ \t ------------------ \t|\t ---------- \t ----------------- \t ---------------- \t ----------- \t -------------- \t ----------------")
+		fmt.Fprintln(tabWriter, "Player \t Average Impact (%) \t|\t Damage (%) \t Flash Assists (%) \t Trade Damage (%) \t Defuses (%) \t Defuses On (%) \t Damage Recv. (%) \t Alive (%)")
+		fmt.Fprintln(tabWriter, "------ \t ------------------ \t|\t ---------- \t ----------------- \t ---------------- \t ----------- \t -------------- \t ---------------- \t ---------")
 		for _, name := range playerNames {
 			id := ids[name]
 			avgRating := 100.0 * ratings[id] / float64(roundsPlayed)
@@ -458,9 +503,10 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 			avgDefuseRating := 100.0 * defuseRatings[id] / float64(roundsPlayed)
 			avgDefusedOnRating := 100.0 * defusedOnRatings[id] / float64(roundsPlayed)
 			avgHurtRating := 100.0 * hurtRatings[id] / float64(roundsPlayed)
+			avgAliveRating := 100.0 * aliveRatings[id] / float64(roundsPlayed)
 
-			fmt.Fprintf(tabWriter, "%s \t %.3f \t|\t %.3f \t %.3f \t %.3f \t %.3f \t %.3f \t %.3f\n",
-				name, avgRating, avgDamageRating, avgFlashAssistRating, avgTradeDamageRating, avgDefuseRating, avgDefusedOnRating, avgHurtRating)
+			fmt.Fprintf(tabWriter, "%s \t %.3f \t|\t %.3f \t %.3f \t %.3f \t %.3f \t %.3f \t %.3f \t %.3f\n",
+				name, avgRating, avgDamageRating, avgFlashAssistRating, avgTradeDamageRating, avgDefuseRating, avgDefusedOnRating, avgHurtRating, avgAliveRating)
 		}
 		tabWriter.Flush()
 
@@ -481,6 +527,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 					TradeDamageRating: tradeDamageRatings[k] / float64(roundsPlayed),
 					DefuseRating:      defuseRatings[k] / float64(roundsPlayed),
 					HurtRating:        hurtRatings[k] / float64(roundsPlayed),
+					AliveRating:       aliveRatings[k] / float64(roundsPlayed),
 				},
 			},
 			RoundRatings: playerRoundRatings[k],

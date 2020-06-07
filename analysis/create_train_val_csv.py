@@ -28,6 +28,8 @@ def create_train_val_csv(train_output, val_output, split, random_seed, file):
 
     train_i, val_i = train_test_split(range(len(file)), train_size=split, random_state=random_seed)
 
+    print('Using {} files, {} for training and {} for validation'.format(len(file), len(train_i), len(val_i)))
+
     # write the csv header to both files
     header = 'roundWinner,aliveCt,aliveT,meanHealthCt,meanHealthT,meanValueCT,meanValueT,roundTime,bombTime,bombDefused\n'
     train_output.write(header)
@@ -61,7 +63,7 @@ def create_train_val_csv(train_output, val_output, split, random_seed, file):
                 val_output.write(row)
                 val_count += 1
 
-    print('Dataset has been split into train: {}, val: {}'.format(train_count, val_count))
+    print('Dataset has been split into: {} training samples, {} validation samples'.format(train_count, val_count))
 
 if __name__ == '__main__':
     create_train_val_csv() # pylint: disable=no-value-for-parameter

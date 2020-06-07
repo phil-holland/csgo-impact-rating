@@ -36,8 +36,20 @@ def find_corrupt(file):
                 findings[json_file] = 'Found unexpectedly high aliveT of {} at tick {}'.format(tick['gameState']['aliveT'], tick['tick'])
                 break
 
+            if tick['gameState']['meanHealthCT'] > 100:
+                findings[json_file] = 'Found unexpectedly high meanHealthCT of {} at tick {}'.format(tick['gameState']['meanHealthCT'], tick['tick'])
+                break
+
+            if tick['gameState']['meanHealthT'] > 100:
+                findings[json_file] = 'Found unexpectedly high meanHealthT of {} at tick {}'.format(tick['gameState']['meanHealthT'], tick['tick'])
+                break
+
             if tick['gameState']['bombTime'] > 42:
                 findings[json_file] = 'Found unexpectedly high bombTime of {} at tick {}'.format(tick['gameState']['bombTime'], tick['tick'])
+                break
+
+            if tick['gameState']['roundTime'] < 0:
+                findings[json_file] = 'Found unexpectedly low roundTime of {} at tick {}'.format(tick['gameState']['roundTime'], tick['tick'])
                 break
 
             if tick['gameState']['roundTime'] > 160:
@@ -47,6 +59,9 @@ def find_corrupt(file):
     for f, reason in findings.items():
         print('> Found possibly corrupt file: "{}"'.format(f))
         print('Reason:\n {}\n'.format(reason))
+
+    if len(findings.items()) == 0:
+        print('No corrupt files found')
 
 if __name__ == '__main__':
     find_corrupt() # pylint: disable=no-value-for-parameter

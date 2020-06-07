@@ -14,7 +14,7 @@ import (
 
 // TagDemo processes the input demo file, creating a '.tagged.json' file in the same directory
 // TODO: take in output path as a parameter to enable easier testing
-func TagDemo(demoPath string) string {
+func TagDemo(demoPath string, pretty bool) string {
 	var output TaggedDemo = TaggedDemo{
 		TaggedDemoMetadata: TaggedDemoMetadata{
 			Version: Version,
@@ -77,7 +77,7 @@ func TagDemo(demoPath string) string {
 
 		if tickBuffer != nil && roundProblemsEncountered == 0 {
 			output.Ticks = append(output.Ticks, tickBuffer...)
-			writeTaggedDemo(&output, demoPath+".tagged.json")
+			writeTaggedDemo(&output, demoPath+".tagged.json", pretty)
 		}
 		tickBuffer = nil
 
@@ -97,6 +97,24 @@ func TagDemo(demoPath string) string {
 	p.RegisterEventHandler(func(e events.RoundEnd) {
 		if matchFinished {
 			return
+		}
+
+		// find out whether the round has ended from time running out
+		if plantTick == 0 && len(tickBuffer) > 0 &&
+			tickBuffer[len(tickBuffer)-1].GameState.AliveCT > 0 &&
+			tickBuffer[len(tickBuffer)-1].GameState.AliveT > 0 {
+			tick := createTick(&p)
+			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+			tick.Type = TickTimeExpired
+			for _, p := range p.GameState().Participants().Playing() {
+				if p.IsAlive() {
+					tick.Tags = append(tick.Tags, Tag{
+						Action: ActionAlive,
+						Player: p.SteamID64,
+					})
+				}
+			}
+			tickBuffer = append(tickBuffer, tick)
 		}
 
 		bar.SetCurrent(int64(p.Progress() * 100))
@@ -126,12 +144,9 @@ func TagDemo(demoPath string) string {
 		}
 
 		plantTick = p.GameState().IngameTick()
-
 		tick := createTick(&p)
 		tick.Type = TickBombPlant
-
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -182,8 +197,17 @@ func TagDemo(demoPath string) string {
 		roundLive = false
 
 		tick := createTick(&p)
+		for _, p := range p.GameState().Participants().Playing() {
+			if p.IsAlive() {
+				tick.Tags = append(tick.Tags, Tag{
+					Action: ActionAlive,
+					Player: p.SteamID64,
+				})
+			}
+		}
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 		tick.Type = TickBombExplode
+
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -194,7 +218,7 @@ func TagDemo(demoPath string) string {
 
 		tick := createTick(&p)
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
-		tick.Type = TickItemPickedUp
+		tick.Type = TickItemPickUp
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -312,7 +336,7 @@ func TagDemo(demoPath string) string {
 	if tickBuffer != nil {
 		output.Ticks = append(output.Ticks, tickBuffer...)
 		tickBuffer = nil
-		writeTaggedDemo(&output, demoPath+".tagged.json")
+		writeTaggedDemo(&output, demoPath+".tagged.json", pretty)
 	}
 
 	bar.SetCurrent(100)
@@ -356,11 +380,22 @@ func createTick(p *dem.Parser) Tick {
 	return tick
 }
 
-func writeTaggedDemo(output *TaggedDemo, outputPath string) {
-	outputMarshalled, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		panic(err)
+func writeTaggedDemo(output *TaggedDemo, outputPath string, pretty bool) {
+	var outputMarshalled []byte
+	var err error
+
+	if pretty {
+		outputMarshalled, err = json.MarshalIndent(output, "", "  ")
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		outputMarshalled, err = json.Marshal(output)
+		if err != nil {
+			panic(err)
+		}
 	}
+
 	file, err := os.Create(outputPath)
 	if err != nil {
 		panic(err)

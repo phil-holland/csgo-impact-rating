@@ -19,7 +19,7 @@ type Tick struct {
 	Type        string    `json:"type"`
 	ScoreCT     int       `json:"scoreCT"`
 	ScoreT      int       `json:"scoreT"`
-	TeamCT      Team      `json:"teamCt"`
+	TeamCT      Team      `json:"teamCT"`
 	TeamT       Team      `json:"teamT"`
 	Players     []Player  `json:"players"`
 	GameState   GameState `json:"gameState"`
@@ -129,4 +129,5 @@ type RatingBreakdown struct {
 	TradeDamageRating float64 `json:"tradeDamageRating"`
 	DefuseRating      float64 `json:"defuseRating"`
 	HurtRating        float64 `json:"hurtRating"`
+	AliveRating       float64 `json:"aliveRating"`
 }

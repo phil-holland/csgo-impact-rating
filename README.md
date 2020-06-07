@@ -51,14 +51,22 @@ Inputs for each of these features are passed to the machine learning model, whic
 
 This concept is applied to **every change in a round's state** from the end of freezetime to the moment the round is won. Players that contributed to changing the round outcome prediction are rewarded with a **appropriate share of the percentage change** in their team's favour - the **sum of these values** over a particular round is their Impact Rating for that round. The following actions are considered when rewarding players with their share:
 
-- Doing damage
-- Trade damage - *if an opponent takes damage very soon after they themself have damaged the player in question*
-- Flash assist damage - *if someone takes damage whilst blinded by a flashbang thrown by the player in question*
-- Defusing the bomb
-- Being "defused on" - *if a T side player is alive when the bomb is defused*
-- Sustaining damage (being hurt)
-
-> It is important to note that some actions may result in negative Impact Rating being "rewarded". For example, sustaining a large amount of damage may shift the round outcome prediction in the favour of your opponents, and therefore you should be punished with the corresponding negative Impact Rating. This also applies to team damage, or if a teammate takes damage after you teamflash them.
+- **Doing damage**
+  - This rewards players who reduce the average health of/players alive on the other team
+- **Trade damage** - *if an opponent takes damage very soon after they themself have damaged the player in question*
+  - This rewards players who get traded by their teammate
+- **Flash assist damage** - *if someone takes damage whilst blinded by a flashbang thrown by the player in question*
+  - This rewards players who flash for their teammate to damage an opponent
+  - This also punishes players who teamflash their teammate into taking damage
+- **Defusing the bomb**
+  - This rewards players who win rounds by defusing the bomb
+- **Being "defused on"** - *if a T side player is alive when the bomb is defused*
+  - This punishes T players who can't stop the defuse
+- **Sustaining damage (being hurt)**
+  - This punishes players who reduce the average health of/players alive on their own team
+- **Surviving at the end of a round** (after time has run out or the bomb has exploded)
+  - This rewards players for forcing their opponent to save
+  - This also punishes players for saving
 
 ## Prediction Model
 
@@ -118,11 +126,3 @@ A full per-player Impact Rating report will be shown in the console output.
 - [pflag](https://github.com/spf13/pflag) - used to build the command line interface
 - [pb (v3)](https://github.com/cheggaaa/pb) - used for progress visualisation
 - [LightGBM](https://github.com/Microsoft/LightGBM) - used for model training/round outcome prediction
-
-## Donate
-
-CS:GO Impact Rating is completely free to use, so any donations are incredibly appreciated! 
-
-Buy me a coffee with the following link:
-
-[![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/PhilHolland)

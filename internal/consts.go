@@ -3,7 +3,7 @@ package internal
 const (
 	// Version denotes the current application version (following semantic
 	// versioning)
-	Version string = "0.7.1"
+	Version string = "0.8.0"
 
 	// TickRoundStart denotes the tick at the very start of the round
 	// (after freezetime)
@@ -11,33 +11,36 @@ const (
 
 	// TickPreDamage denotes the tick where damage is being done, but before
 	// the damage has been processed
-	TickPreDamage string = "prePlayerDamaged"
+	TickPreDamage string = "prePlayerDamage"
 
 	// TickDamage denotes the tick where damage is being done, after the
 	// damage has been processed
-	TickDamage string = "playerDamaged"
+	TickDamage string = "playerDamage"
 
 	// TickBombPlant denotes the tick where the bomb has just been planted
-	TickBombPlant string = "bombPlanted"
+	TickBombPlant string = "bombPlant"
 
 	// TickPreBombDefuse denotes the tick where the bomb has been defused, but
 	// before the bomb defusal has been processed
-	TickPreBombDefuse string = "preBombDefused"
+	TickPreBombDefuse string = "preBombDefuse"
 
 	// TickBombDefuse denotes the tick where the bomb has been defused,
 	// after the bomb defusal has been processed
-	TickBombDefuse string = "bombDefused"
+	TickBombDefuse string = "bombDefuse"
 
 	// TickBombExplode denotes the tick where the bomb has exploded
-	TickBombExplode string = "bombExploded"
+	TickBombExplode string = "bombExplode"
 
-	// TickItemPickedUp denotes the tick where an item has been picked up (or
+	// TickTimeExpired denotes the tick where the round ends by time running out
+	TickTimeExpired string = "timeExpired"
+
+	// TickItemPickUp denotes the tick where an item has been picked up (or
 	// bought) by a player
-	TickItemPickedUp string = "itemPickedUp"
+	TickItemPickUp string = "itemPickUp"
 
 	// TickItemDrop denotes the tick where an item has been dropped (or used)
 	// by a player
-	TickItemDrop string = "itemDropped"
+	TickItemDrop string = "itemDrop"
 
 	// ActionDamage represents a player damaging another player
 	ActionDamage string = "damage"
@@ -59,5 +62,7 @@ const (
 	// defused
 	ActionDefusedOn string = "defusedOn"
 
-	// TODO: add "alive" action, denoting a player simply being alive - rewards playing time/punishes saving
+	// ActionAlive represents a player simply being alive when the bomb
+	// explodes, or when time expires
+	ActionAlive string = "alive"
 )

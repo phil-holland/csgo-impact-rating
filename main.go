@@ -23,6 +23,7 @@ func usage() {
 func main() {
 	// tagging flags
 	force := flag.BoolP("force", "f", false, "Force the input demo file to be tagged, even if a\n.tagged.json file already exists.")
+	pretty := flag.BoolP("pretty", "p", false, "Pretty-print the output .tagged.json file.")
 
 	// evaluation flags
 	evalSkip := flag.BoolP("eval-skip", "s", false, "Skip the evaluation process, only tag the input\ndemo file.")
@@ -76,7 +77,7 @@ func main() {
 		fmt.Printf("Skipping tagging process, tag file already exists at: \"%s\"\n", taggedFilePath)
 	} else {
 		// start parsing the demo file
-		taggedFilePath = internal.TagDemo(demoPath)
+		taggedFilePath = internal.TagDemo(demoPath, *pretty)
 		fmt.Printf("Tag file written to: \"%s\"\n", taggedFilePath)
 	}
 

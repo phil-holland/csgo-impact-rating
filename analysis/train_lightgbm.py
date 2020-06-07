@@ -9,8 +9,6 @@ import numpy as np
 from shutil import copyfile
 from datetime import datetime
 
-train_data = None
-val_data = None
 dtrain = None
 dvalid = None
 
@@ -19,7 +17,7 @@ dvalid = None
 @click.option('--val', '-v', type=click.Path(resolve_path=True, file_okay=True, dir_okay=False, exists=True), required=True)
 @click.option('--num-trials', '-n', type=int, default=100, show_default=True)
 def train_lightgbm(train, val, num_trials):
-    global train_data, val_data, dtrain, dvalid
+    global dtrain, dvalid
 
     print('Loading data from csv files')
     train_data = np.genfromtxt(train, delimiter=',', skip_header=1)
@@ -42,7 +40,6 @@ def train_lightgbm(train, val, num_trials):
     )
 
     # clear or create output directories
-
     if os.path.exists('./models'):
         print('Removing old model files from ./models directory')
         files = glob.glob('./models/*')
@@ -92,7 +89,7 @@ def train_lightgbm(train, val, num_trials):
     copyfile('./models/LightGBM_model_%03d.txt' % study.best_trial.number, './LightGBM_model.txt')
 
 def objective(trial):
-    global train_data, val_data, dtrain, dvalid
+    global dtrain, dvalid
 
     param = {
         'objective': 'binary',
@@ -103,7 +100,7 @@ def objective(trial):
         'num_leaves': trial.suggest_int('num_leaves', 7, 1024),
         'max_depth': trial.suggest_int('max_depth', 2, 64),
         'lambda_l1': trial.suggest_loguniform('lambda_l1', 1e-8, 10.0),
-        'lambda_l2': trial.suggest_loguniform('lambda_l2', 1e-8, 10.0),
+        'lambda_l2': trial.suggest_loguniform('lambda_l2', 1e-8, 1.0),
         'feature_fraction': trial.suggest_uniform('feature_fraction', 0.4, 1.0),
         'bagging_fraction': trial.suggest_uniform('bagging_fraction', 0.4, 1.0),
         'bagging_freq': trial.suggest_int('bagging_freq', 1, 10),
