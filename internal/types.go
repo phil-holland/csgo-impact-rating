@@ -127,7 +127,7 @@ type RatingBreakdown struct {
 	DamageRating      float64 `json:"damageRating"`
 	FlashAssistRating float64 `json:"flashAssistRating"`
 	TradeDamageRating float64 `json:"tradeDamageRating"`
-	DefuseRating      float64 `json:"defuseRating"`
+	RetakeRating      float64 `json:"retakeRating"`
 	HurtRating        float64 `json:"hurtRating"`
 	AliveRating       float64 `json:"aliveRating"`
 }

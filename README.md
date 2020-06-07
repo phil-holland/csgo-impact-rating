@@ -51,20 +51,20 @@ Inputs for each of these features are passed to the machine learning model, whic
 
 This concept is applied to **every change in a round's state** from the end of freezetime to the moment the round is won. Players that contributed to changing the round outcome prediction are rewarded with a **appropriate share of the percentage change** in their team's favour - the **sum of these values** over a particular round is their Impact Rating for that round. The following actions are considered when rewarding players with their share:
 
-- **Doing damage**
-  - This rewards players who reduce the average health of/players alive on the other team
-- **Trade damage** - *if an opponent takes damage very soon after they themself have damaged the player in question*
+- **Dealing damage**
+  - This rewards players who reduce the average health of, or the number of players alive on the other team
+  - This also punishes players for team-damage
+- **Trade damage** *(if an opponent takes damage very soon after they themselves have damaged the player in question)*
   - This rewards players who get traded by their teammate
-- **Flash assist damage** - *if someone takes damage whilst blinded by a flashbang thrown by the player in question*
-  - This rewards players who flash for their teammate to damage an opponent
-  - This also punishes players who teamflash their teammate into taking damage
-- **Defusing the bomb**
-  - This rewards players who win rounds by defusing the bomb
-- **Being "defused on"** - *if a T side player is alive when the bomb is defused*
-  - This punishes T players who can't stop the defuse
+- **Flash assist damage** *(if someone takes damage whilst blinded by a flashbang thrown by the player in question)*
+  - This rewards players for flashing an enemy who then sustains damage
+  - This also punishes players for team-flashing their teammate into taking damage
+- **Successfully retaking**
+  - This rewards players who win rounds by retaking and defusing the bomb - all living CTs are rewarded when the bomb is defused
+  - This also punishes T-side players who cannot prevent a defuse whilst alive
 - **Sustaining damage (being hurt)**
-  - This punishes players who reduce the average health of/players alive on their own team
-- **Surviving at the end of a round** (after time has run out or the bomb has exploded)
+  - This punishes players who reduce the average health of, or the number of players alive on their own team
+- **Being alive at the end of a round** *(after time has run out or the bomb has exploded)*
   - This rewards players for forcing their opponent to save
   - This also punishes players for saving
 
@@ -72,14 +72,14 @@ This concept is applied to **every change in a round's state** from the end of f
 
 Whilst the concept behind Impact Rating can in theory be implemented using any binary classification model, the code here has been written to target the [LightGBM framework](https://github.com/Microsoft/LightGBM). This is a framework used for gradient boosting decision trees (GBDT), and has been [shown to perform very well](https://github.com/microsoft/LightGBM/blob/master/docs/Experiments.rst) in binary classification problems. It has also been chosen for its lightweight nature, and ease of installation.
 
-Model analysis and instructions for how to train a new model can be found here: [model training & analysis](analysis/README.md).
+Model analysis and instructions for how to train a new model can be found here: [model analysis](analysis/README.md).
 
 ## Download
 
-The latest Impact Rating distribution for your system can be downloaded from this project's release page here: 
+The latest Impact Rating distribution for your system can be downloaded from this Github project's release page (for 99% of Windows users, download the `csgo-impact-rating_win64.zip` file).
 
 <p align="center">
-  <a href="https://github.com/Phil-Holland/csgo-impact-rating/releases/latest">
+  <a href="https://github.com/Phil-Holland/csgo-impact-rating/releases/latest" style="font-size: 1.25em">
     <b>Download Latest Version</b>
   </a>
 </p>
@@ -99,6 +99,7 @@ the console and a '.rating.json' file.
 
   -f, --force                Force the input demo file to be tagged, even if a
                              .tagged.json file already exists.
+  -p, --pretty               Pretty-print the output .tagged.json file.
   -s, --eval-skip            Skip the evaluation process, only tag the input
                              demo file.
   -m, --eval-model string    The path to the LightGBM_model.txt file to use for
@@ -111,13 +112,86 @@ the console and a '.rating.json' file.
                               2 = print overall & per-round ratings (default 2)
 ```
 
-For general usage, the command line flags can be ignored. For example, the following command will **produce player ratings** for a demo file named `example.dem` in the working directory:
+For general usage, the above command line flags can be ignored. For example, the following command will process and **produce player ratings** for a demo file named `example.dem` in the working directory:
 
 ```sh
 csgo-impact-rating example.dem
 ```
 
 A full per-player Impact Rating report will be shown in the console output.
+
+### Processing Details
+
+Processing consists of two internal stages: **tagging** and **evaluation**.
+
+#### 1. Tagging:
+
+First, the raw demo file is parsed from start to finish, creating a *"tagged file"* in the same directory as the input demo with the extension `.tagged.json`. This is a [JSON file](https://en.wikipedia.org/wiki/JSON) that describes the key events of the demo, each "tagged" with any players who have contributed to that event. A complete example of a single "tagged" event is shown below:
+
+```json
+{
+  "tick": 354002,
+  "type": "playerDamage",
+  "scoreCT": 11,
+  "scoreT": 8,
+  "teamCT": { "id": 3, "name": "FaZe Clan" },
+  "teamT": { "id": 2, "name": "mousesports" },
+  "players": [
+    { "steamID": 76561198083485506, "name": "woxic", "teamID": 2 },
+    { "steamID": 76561198068422762, "name": "frozen","teamID": 2 },
+    { "steamID": 76561197997351207, "name": "rain", "teamID": 3 },
+    { "steamID": 76561198201620490, "name": "broky", "teamID": 3 },
+    { "steamID": 76561197988627193, "name": "olofmeister", "teamID": 3 },
+    { "steamID": 76561197991272318, "name": "ropz", "teamID": 2 },
+    { "steamID": 76561197989430253, "name": "karrigan", "teamID": 2 },
+    { "steamID": 76561197988539104, "name": "chrisJ", "teamID": 2 },
+    { "steamID": 76561198039986599, "name": "coldzera", "teamID": 3 },
+    { "steamID": 76561198041683378, "name": "NiKo", "teamID": 3 }
+  ],
+  "gameState": {
+    "aliveCT": 4,
+    "aliveT": 1,
+    "meanHealthCT": 86.25,
+    "meanHealthT": 100,
+    "meanValueCT": 6312.5,
+    "meanValueT": 5100,
+    "roundTime": 39.375,
+    "bombTime": 0,
+    "bombDefused": false
+  },
+  "tags": [
+    { "action": "damage", "player": 76561197991272318 },
+    { "action": "flashAssist", "player": 76561197991272318 },
+    { "action": "hurt", "player": 76561197988627193 }
+  ],
+  "roundWinner": 0
+}
+```
+
+**Note:** if an tagged file already exists for the input demo, this stage is skipped by default.
+
+#### 2. Evaluating: 
+
+Secondly, each event saved in the tagged file is evaluated with the machine learning model, producing a predicted round outcome probability. These probabilities are then used to calculate player ratings for each round, and their overall average over all rounds. This is printed to the console window - an average Impact Rating table for an example demo is shown below:
+
+```
+> Overall:
+
+Player          Average Impact (%)    |    Damage (%)     Flash Assists (%)     Trade Damage (%)     Retakes (%)     Damage Recv. (%)     Alive (%)
+------          ------------------    |    ----------     -----------------     ----------------     -----------     ----------------     ---------
+NiKo            1.437                 |    8.293          0.081                 2.151                0.005           -9.046               -0.047
+broky           0.428                 |    9.891          1.187                 1.912                0.005           -12.569              0.001
+chrisJ          -3.252                |    9.492          0.000                 1.592                0.145           -14.526              0.045
+coldzera        4.640                 |    19.461         -0.797                0.340                0.005           -14.307              -0.063
+frozen          14.941                |    19.581         1.006                 1.807                2.466           -9.887               -0.033
+karrigan        -2.735                |    8.918          0.962                 0.655                0.076           -13.370              0.024
+olofmeister     -4.605                |    7.132          0.319                 1.259                0.000           -13.293              -0.022
+rain            -1.889                |    10.494         0.057                 0.183                0.000           -12.608              -0.014
+ropz            -6.264                |    5.485          0.030                 0.856                0.069           -12.761              0.057
+woxic           0.054                 |    10.532         0.626                 1.482                0.076           -12.715              0.053
+```
+
+All calculated statistics are saved to a *"rating file"* with the extension `.rating.json` in the same directory as the input demo. Along with player rating summaries, this file contains the inferred probabilities at each event, and the changes in player ratings through each round.
 
 ## Built With
 

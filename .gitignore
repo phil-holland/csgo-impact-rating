@@ -4,6 +4,7 @@ demos/*
 scripts/*
 dist/*
 LightGBM_model.txt
+README.html
 
 # Binaries for programs and plugins
 *.exe

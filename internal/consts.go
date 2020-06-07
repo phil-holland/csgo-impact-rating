@@ -3,7 +3,7 @@ package internal
 const (
 	// Version denotes the current application version (following semantic
 	// versioning)
-	Version string = "0.8.0"
+	Version string = "0.8.1"
 
 	// TickRoundStart denotes the tick at the very start of the round
 	// (after freezetime)
@@ -55,12 +55,8 @@ const (
 	// ActionHurt represents a player being damaged
 	ActionHurt string = "hurt"
 
-	// ActionDefuse represents a player defusing the bomb
-	ActionDefuse string = "defuse"
-
-	// ActionDefusedOn represents a T player being alive when the bomb gets
-	// defused
-	ActionDefusedOn string = "defusedOn"
+	// ActionRetake represents a player defusing the bomb
+	ActionRetake string = "retake"
 
 	// ActionAlive represents a player simply being alive when the bomb
 	// explodes, or when time expires

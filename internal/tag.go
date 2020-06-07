@@ -39,7 +39,7 @@ func TagDemo(demoPath string, pretty bool) string {
 	// map from player1 id -> (map of player2 ids of last tick where player 1 damaged player 2)
 	var lastDamageTick map[uint64](map[uint64]int) = make(map[uint64](map[uint64]int))
 
-	fmt.Printf("Tagging demo file: '%s'\n", demoPath)
+	fmt.Printf("Tagging demo file: \"%s\"\n", demoPath)
 
 	f, err := os.Open(demoPath)
 	if err != nil {
@@ -169,18 +169,12 @@ func TagDemo(demoPath string, pretty bool) string {
 		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
 		tick.Type = TickBombDefuse
 
-		// add tag for the actual defuser
-		tick.Tags = append(tick.Tags, Tag{
-			Action: ActionDefuse,
-			Player: e.Player.SteamID64,
-		})
-
-		// add tag for each T alive when the bomb is defused
-		for _, t := range p.GameState().TeamTerrorists().Members() {
-			if t.IsAlive() {
+		// add tag for each of the players alive when the bomb is defused
+		for _, p := range p.GameState().Participants().Playing() {
+			if p.IsAlive() {
 				tick.Tags = append(tick.Tags, Tag{
-					Action: ActionDefusedOn,
-					Player: t.SteamID64,
+					Action: ActionRetake,
+					Player: p.SteamID64,
 				})
 			}
 		}
