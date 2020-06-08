@@ -82,6 +82,7 @@ type TeamRating struct {
 	ID            int           `json:"id"`
 	Name          string        `json:"name"`
 	StartingSide  int           `json:"startingSide"`
+	FinalScore    int           `json:"finalScore"`
 	OverallRating OverallRating `json:"overallRating"`
 	RoundRatings  []RoundRating `json:"roundRatings"`
 }

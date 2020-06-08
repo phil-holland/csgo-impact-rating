@@ -21,6 +21,8 @@
 
 Impact Rating uses a machine learning model trained on a large amount of historical data to **predict the probable winner** of a given CS:GO round, based on the current state of the round. A **player's Impact Rating** is then calculated as the amount by which their actions shift the predicted likelihood of their team winning the round. Therefore, **players are rewarded purely for making plays that improve their team's chance of winning the current round**. Conversely, negative Impact Rating is given when a player's actions reduce their team's chance of winning the round.
 
+A player's performance over the course of a complete game can be summarised with their **Average Impact Rating (AIR)** - the mean of all single-round ratings.
+
 ### Example
 
 Two simplified examples of in-game scenarios are shown in the diagram below. Both describe a single CT player getting a triple kill, but they only receive impact rating in one scenario. In the first, the CTs are left in a 5v2 situation in which they are highly favoured to subsequently win the round. In the second, the remaining CTs are forfeiting the round, not attempting a late retake. A triple kill at this point **does not alter the CT team's chance of winning the round**.
@@ -49,7 +51,7 @@ Inputs for each of these features are passed to the machine learning model, whic
 
 > For example, a returned value of `0.34` represents a predicted **34% chance** of a **T-side** round win, and a **66% chance** of a **CT-side** round win.
 
-This concept is applied to **every in-game event that causes a round's state to change** from the end of freezetime to the moment the round is won. Players that contributed to changing the round outcome prediction are rewarded with a **appropriate share of the percentage change** in their team's favour - the **sum of these values** over a particular round is their Impact Rating for that round.
+This concept is applied to **every in-game event that causes a round's state to change** from the end of freezetime to the moment the round is won. Players that contributed to changing the round outcome prediction are rewarded with a **appropriate share of the percentage change** in their team's favour - the **sum of these values** over a particular round is their **Impact Rating for that round**.
 
 The following action categories are considered when rewarding players with their share:
 
@@ -174,7 +176,7 @@ First, the raw demo file is parsed from start to finish, creating a *"tagged fil
 
 #### 2. Evaluating: 
 
-Secondly, each event saved in the tagged file is evaluated with the machine learning model, producing a predicted round outcome probability. These probabilities are then used to calculate player ratings for each round, and their overall average over all rounds. This is printed to the console window - an average Impact Rating table for an example demo is shown below:
+Secondly, each event saved in the tagged file is evaluated with the machine learning model, producing a predicted round outcome probability. These probabilities are then used to calculate player ratings for each round, and their overall average over all rounds. This is printed to the console window - an Average Impact Rating table for an example demo is shown below:
 
 ```
 > Overall:

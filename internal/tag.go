@@ -30,8 +30,8 @@ func TagDemo(demoPath string, pretty bool) string {
 	var lastTScore int = -1
 	var lastCtScore int = -1
 	var matchFinished bool
-	var totalProblemsEncountered int = 0
-	var roundProblemsEncountered int = 0
+	var totalProblemsEncountered int
+	var roundProblemsEncountered int
 
 	// map from player id -> the id of the player who last flashed them (could be teammates)
 	var lastFlashedPlayer map[uint64]uint64 = make(map[uint64]uint64)
