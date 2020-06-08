@@ -179,18 +179,18 @@ Secondly, each event saved in the tagged file is evaluated with the machine lear
 ```
 > Overall:
 
-Player          Average Impact (%)    |    Damage (%)     Flash Assists (%)     Trade Damage (%)     Retakes (%)     Damage Recv. (%)     Alive (%)
-------          ------------------    |    ----------     -----------------     ----------------     -----------     ----------------     ---------
-NiKo            1.437                 |    8.293          0.081                 2.151                0.005           -9.046               -0.047
-broky           0.428                 |    9.891          1.187                 1.912                0.005           -12.569              0.001
-chrisJ          -3.252                |    9.492          0.000                 1.592                0.145           -14.526              0.045
-coldzera        4.640                 |    19.461         -0.797                0.340                0.005           -14.307              -0.063
-frozen          14.941                |    19.581         1.006                 1.807                2.466           -9.887               -0.033
-karrigan        -2.735                |    8.918          0.962                 0.655                0.076           -13.370              0.024
-olofmeister     -4.605                |    7.132          0.319                 1.259                0.000           -13.293              -0.022
-rain            -1.889                |    10.494         0.057                 0.183                0.000           -12.608              -0.014
-ropz            -6.264                |    5.485          0.030                 0.856                0.069           -12.761              0.057
-woxic           0.054                 |    10.532         0.626                 1.482                0.076           -12.715              0.053
+Team           Player         Average Impact (%)   |   Damage (%)    Flash Assists (%)    Trade Damage (%)    Retakes (%)    Damage Recv. (%)    Alive (%)
+----           ------         ------------------   |   ----------    -----------------    ----------------    -----------    ----------------    ---------
+FaZe Clan      olofmeister    -4.605               |   7.132         0.319                1.259               0.000          -13.293             -0.022
+FaZe Clan      rain           -1.889               |   10.494        0.057                0.183               0.000          -12.608             -0.014
+FaZe Clan      coldzera       4.640                |   19.461        -0.797               0.340               0.005          -14.307             -0.063
+FaZe Clan      NiKo           1.437                |   8.293         0.081                2.151               0.005          -9.046              -0.047
+FaZe Clan      broky          0.428                |   9.891         1.187                1.912               0.005          -12.569             0.001
+mousesports    woxic          0.054                |   10.532        0.626                1.482               0.076          -12.715             0.053
+mousesports    frozen         14.941               |   19.581        1.006                1.807               2.466          -9.887              -0.033
+mousesports    ropz           -6.264               |   5.485         0.030                0.856               0.069          -12.761             0.057
+mousesports    karrigan       -2.735               |   8.918         0.962                0.655               0.076          -13.370             0.024
+mousesports    chrisJ         -3.252               |   9.492         0.000                1.592               0.145          -14.526             0.045
 ```
 
 All calculated statistics are saved to a *"rating file"* with the extension `.rating.json` in the same directory as the input demo. Along with player rating summaries, this file contains the inferred probabilities at each event, and the changes in player ratings through each round.

@@ -65,6 +65,7 @@ type Tag struct {
 type Rating struct {
 	RatingMetadata          RatingMetadata           `json:"metadata"`
 	RoundsPlayed            int                      `json:"roundsPlayed"`
+	Teams                   []TeamRating             `json:"teams"`
 	Players                 []PlayerRating           `json:"players"`
 	RatingChanges           []RatingChange           `json:"ratingChanges"`
 	RoundOutcomePredictions []RoundOutcomePrediction `json:"roundOutcomePredictions"`
@@ -76,9 +77,19 @@ type RatingMetadata struct {
 	Version string `json:"version"`
 }
 
+// TeamRating holds rating summary data for a whole team
+type TeamRating struct {
+	ID            int           `json:"id"`
+	Name          string        `json:"name"`
+	StartingSide  int           `json:"startingSide"`
+	OverallRating OverallRating `json:"overallRating"`
+	RoundRatings  []RoundRating `json:"roundRatings"`
+}
+
 // PlayerRating holds rating summary data for a single player
 type PlayerRating struct {
 	SteamID       uint64        `json:"steamID"`
+	TeamID        int           `json:"teamID"`
 	Name          string        `json:"name"`
 	OverallRating OverallRating `json:"overallRating"`
 	RoundRatings  []RoundRating `json:"roundRatings"`
