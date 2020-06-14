@@ -9,36 +9,11 @@ import numpy as np
 from shutil import copyfile
 from datetime import datetime
 
-dtrain = None
-dvalid = None
-
 @click.command()
 @click.option('--train', '-t', type=click.Path(resolve_path=True, file_okay=True, dir_okay=False, exists=True), required=True)
 @click.option('--val', '-v', type=click.Path(resolve_path=True, file_okay=True, dir_okay=False, exists=True), required=True)
 @click.option('--num-trials', '-n', type=int, default=100, show_default=True)
 def train_lightgbm(train, val, num_trials):
-    global dtrain, dvalid
-
-    print('Loading data from csv files')
-    train_data = np.genfromtxt(train, delimiter=',', skip_header=1)
-    val_data = np.genfromtxt(val, delimiter=',', skip_header=1)
-
-    feature_names = ['aliveCt','aliveT','meanHealthCt','meanHealthT','meanValueCT','meanValueT','roundTime','bombTime','bombDefused']
-
-    dtrain = lgb.Dataset(
-        data=train_data[:,1:],
-        label=train_data[:,:1].flatten(),
-        feature_name=feature_names,
-        categorical_feature=None
-    )
-    
-    dvalid = lgb.Dataset(
-        data=val_data[:,1:],
-        label=val_data[:,:1].flatten(),
-        feature_name=feature_names,
-        categorical_feature=None
-    )
-
     # clear or create output directories
     if os.path.exists('./models'):
         print('Removing old model files from ./models directory')
@@ -64,10 +39,9 @@ def train_lightgbm(train, val, num_trials):
 
     print('Starting Optuna study')
     study = optuna.create_study(
-        pruner=optuna.pruners.MedianPruner(n_warmup_steps=20),
         direction='minimize'
     )
-    study.optimize(lambda trial: objective(trial), n_trials=num_trials, )
+    study.optimize(lambda trial: objective(trial, train, val), n_trials=num_trials)
 
     print('Number of finished trials: {}'.format(len(study.trials)))
     trial = study.best_trial
@@ -88,8 +62,28 @@ def train_lightgbm(train, val, num_trials):
     print('Copying best performing LightGBM model file to ./LightGBM_model.txt')
     copyfile('./models/LightGBM_model_%03d.txt' % study.best_trial.number, './LightGBM_model.txt')
 
-def objective(trial):
-    global dtrain, dvalid
+def objective(trial, train, val):
+
+    print('\nLoading training/validation data for trial #{:03d}'.format(trial.number))
+
+    train_data = np.genfromtxt(train, delimiter=',', skip_header=1)
+    val_data = np.genfromtxt(val, delimiter=',', skip_header=1)
+
+    feature_names = ['aliveCt','aliveT','meanHealthCt','meanHealthT','meanValueCT','meanValueT','roundTime','bombTime','bombDefused']
+
+    dtrain = lgb.Dataset(
+        data=train_data[:,1:],
+        label=train_data[:,:1].flatten(),
+        feature_name=feature_names,
+        categorical_feature=None
+    )
+    
+    dvalid = lgb.Dataset(
+        data=val_data[:,1:],
+        label=val_data[:,:1].flatten(),
+        feature_name=feature_names,
+        categorical_feature=None
+    )
 
     param = {
         'objective': 'binary',
@@ -97,18 +91,16 @@ def objective(trial):
         'verbosity': -1,
         'boosting_type': 'gbdt',
         'learning_rate': 0.01,
-        'num_leaves': trial.suggest_int('num_leaves', 7, 1024),
+        'num_leaves': trial.suggest_int('num_leaves', 7, 128),
         'max_depth': trial.suggest_int('max_depth', 2, 64),
-        'lambda_l1': trial.suggest_loguniform('lambda_l1', 1e-8, 10.0),
-        'lambda_l2': trial.suggest_loguniform('lambda_l2', 1e-8, 1.0),
-        'feature_fraction': trial.suggest_uniform('feature_fraction', 0.4, 1.0),
-        'bagging_fraction': trial.suggest_uniform('bagging_fraction', 0.4, 1.0),
+        'feature_fraction': trial.suggest_uniform('feature_fraction', 0.7, 1.0),
+        'bagging_fraction': trial.suggest_uniform('bagging_fraction', 0.7, 1.0),
         'bagging_freq': trial.suggest_int('bagging_freq', 1, 10),
-        'min_child_samples': trial.suggest_int('min_child_samples', 5, 100),
+        'min_child_samples': trial.suggest_int('min_child_samples', 5, 250),
+        'max_bin_by_feature': [6, 6, 255, 255, 255, 255, 255, 255, 2]
     }
 
-    # Add a callback for pruning
-    pruning_callback = optuna.integration.LightGBMPruningCallback(trial, 'binary_logloss', 'val')
+    print('Selected parameters for new trial #{:03d}: {}'.format(trial.number, param))
 
     # save score results to a dictionary
     results = {}
@@ -121,21 +113,22 @@ def objective(trial):
         early_stopping_rounds=50,
         valid_sets=[dvalid, dtrain],
         valid_names=['val', 'train'],
-        verbose_eval=True,
+        verbose_eval=False,
         categorical_feature=['bombDefused'],
-        callbacks=[pruning_callback, lgb.record_evaluation(results)]
+        #callbacks=[pruning_callback, lgb.record_evaluation(results)]
+        callbacks=[lgb.record_evaluation(results)]
     )
 
-    print('Training log loss:\t', gbm.best_score['train']['binary_logloss'])
-    print('Validation log loss:\t', gbm.best_score['val']['binary_logloss'])
+    print('Training log loss (trial #{:03d}): {}\t'.format(trial.number, gbm.best_score['train']['binary_logloss']))
+    print('Validation log loss (trial #{:03d}): {}\t'.format(trial.number, gbm.best_score['val']['binary_logloss']))
 
-    out_path = './models/LightGBM_model_%03d.txt' % trial.number
-    print('Writing LightGBM model out to', out_path)
+    out_path = './models/LightGBM_model_{:03d}.txt'.format(trial.number)
+    print('Writing LightGBM model for trial #{:03d} out to: {}'.format(trial.number, out_path))
 
     with open(out_path, 'w', newline='\n') as f:
         f.write(gbm.model_to_string())
 
-    out_path = './trials/trial_%03d.csv' % trial.number
+    out_path = './trials/trial_{:03d}.csv'.format(trial.number)
     print('Writing trial results out to', out_path)
     with open(out_path, 'w') as f:
         f.write('round,train_logloss,val_logloss,train_auc,val_auc\n')

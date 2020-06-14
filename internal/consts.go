@@ -1,10 +1,10 @@
 package internal
 
-const (
-	// Version denotes the current application version (following semantic
-	// versioning)
-	Version string = "0.8.1"
+// Version denotes the current application version (following semantic
+// versioning) and should be set through build flags
+var Version string = "dev"
 
+const (
 	// TickRoundStart denotes the tick at the very start of the round
 	// (after freezetime)
 	TickRoundStart string = "roundStart"
