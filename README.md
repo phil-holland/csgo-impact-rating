@@ -135,12 +135,18 @@ First, the raw demo file is parsed from start to finish, creating a *"tagged fil
 
 ```json
 {
-  "tick": 354002,
+  "tick": 251249,
   "type": "playerDamage",
-  "scoreCT": 11,
-  "scoreT": 8,
-  "teamCT": { "id": 3, "name": "FaZe Clan" },
-  "teamT": { "id": 2, "name": "mousesports" },
+  "scoreCT": 6,
+  "scoreT": 7,
+  "teamCT": {
+    "id": 2,
+    "name": "mousesports"
+  },
+  "teamT": {
+    "id": 3,
+    "name": "FaZe Clan"
+  },
   "players": [
     { "steamID": 76561198083485506, "name": "woxic", "teamID": 2 },
     { "steamID": 76561198068422762, "name": "frozen","teamID": 2 },
@@ -154,22 +160,28 @@ First, the raw demo file is parsed from start to finish, creating a *"tagged fil
     { "steamID": 76561198041683378, "name": "NiKo", "teamID": 3 }
   ],
   "gameState": {
-    "aliveCT": 4,
-    "aliveT": 1,
-    "meanHealthCT": 86.25,
+    "aliveCT": 3,
+    "aliveT": 2,
+    "meanHealthCT": 80.33333333333333,
     "meanHealthT": 100,
-    "meanValueCT": 6312.5,
-    "meanValueT": 5100,
-    "roundTime": 39.375,
+    "meanValueCT": 1233.3333333333333,
+    "meanValueT": 6325,
+    "roundTime": 58.8359375,
     "bombTime": 0,
+    "bombDefusing": false,
     "bombDefused": false
   },
   "tags": [
-    { "action": "damage", "player": 76561197991272318 },
-    { "action": "flashAssist", "player": 76561197991272318 },
-    { "action": "hurt", "player": 76561197988627193 }
+    {
+      "action": "damage",
+      "player": 76561198201620490
+    },
+    {
+      "action": "hurt",
+      "player": 76561198068422762
+    }
   ],
-  "roundWinner": 0
+  "roundWinner": 1
 }
 ```
 
