@@ -37,19 +37,20 @@ An in-depth case study analysis of an individual match between Mousesports and F
 
 Internally, the state of a round at any given time is captured by the following features:
 
-- CT players alive
-- T players alive
-- Mean health of CT players
-- Mean health of T players
-- Mean value of CT equipment
-- Mean value of T equipment
+- The number of CT players alive
+- The number of T players alive
+- The mean health of CT players
+- The mean health of T players
+- The mean value of CT equipment
+- The mean value of T equipment
+- The round time elapsed (in seconds)
+- The bomb time elapsed (in seconds) - *this is zero before the bomb is planted*
+- Whether the bomb is currently being defused
 - Whether the bomb has been defused  - *this is required to reward players for winning a round by defusing*
-- Round time elapsed (in seconds)
-- Bomb time elapsed (in seconds) - *this is zero before the bomb is planted*
 
 Inputs for each of these features are passed to the machine learning model, which returns a single non-integer value between `0.0` and `1.0` as the round winner prediction. This value can be directly interpreted as the **probability** that the round will be won by the **T-side**. 
 
-> For example, a returned value of `0.34` represents a predicted **34% chance** of a **T-side** round win, and a **66% chance** of a **CT-side** round win.
+> *For example, a returned value of `0.34` represents a predicted **34% chance** of a **T-side** round win, and a **66% chance** of a **CT-side** round win.*
 
 This concept is applied to **every in-game event that causes a round's state to change** from the end of freezetime to the moment the round is won. Players that contributed to changing the round outcome prediction are rewarded with a **appropriate share of the percentage change** in their team's favour - the **sum of these values** over a particular round is their **Impact Rating for that round**.
 

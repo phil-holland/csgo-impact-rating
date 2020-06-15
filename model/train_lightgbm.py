@@ -69,7 +69,7 @@ def objective(trial, train, val):
     train_data = np.genfromtxt(train, delimiter=',', skip_header=1)
     val_data = np.genfromtxt(val, delimiter=',', skip_header=1)
 
-    feature_names = ['aliveCt','aliveT','meanHealthCt','meanHealthT','meanValueCT','meanValueT','roundTime','bombTime','bombDefused']
+    feature_names = ['aliveCt','aliveT','meanHealthCt','meanHealthT','meanValueCT','meanValueT','roundTime','bombTime','bombDefusing','bombDefused']
 
     dtrain = lgb.Dataset(
         data=train_data[:,1:],
@@ -91,13 +91,13 @@ def objective(trial, train, val):
         'verbosity': -1,
         'boosting_type': 'gbdt',
         'learning_rate': 0.01,
-        'num_leaves': trial.suggest_int('num_leaves', 7, 128),
-        'max_depth': trial.suggest_int('max_depth', 2, 64),
+        'num_leaves': trial.suggest_int('num_leaves', 7, 256),
+        'max_depth': trial.suggest_int('max_depth', 2, 128),
         'feature_fraction': trial.suggest_uniform('feature_fraction', 0.7, 1.0),
         'bagging_fraction': trial.suggest_uniform('bagging_fraction', 0.7, 1.0),
         'bagging_freq': trial.suggest_int('bagging_freq', 1, 10),
-        'min_child_samples': trial.suggest_int('min_child_samples', 5, 250),
-        'max_bin_by_feature': [6, 6, 255, 255, 255, 255, 255, 255, 2]
+        'min_child_samples': trial.suggest_int('min_child_samples', 5, 300),
+        'max_bin_by_feature': [6, 6, 255, 255, 255, 255, 255, 255, 2, 2]
     }
 
     print('Selected parameters for new trial #{:03d}: {}'.format(trial.number, param))
@@ -113,9 +113,8 @@ def objective(trial, train, val):
         early_stopping_rounds=50,
         valid_sets=[dvalid, dtrain],
         valid_names=['val', 'train'],
-        verbose_eval=False,
-        categorical_feature=['bombDefused'],
-        #callbacks=[pruning_callback, lgb.record_evaluation(results)]
+        verbose_eval=True,
+        categorical_feature=['bombDefusing','bombDefused'],
         callbacks=[lgb.record_evaluation(results)]
     )
 

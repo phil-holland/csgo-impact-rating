@@ -31,7 +31,7 @@ def create_train_val_csv(train_output, val_output, split, random_seed, file):
     print('Using {} files, {} for training and {} for validation'.format(len(file), len(train_i), len(val_i)))
 
     # write the csv header to both files
-    header = 'roundWinner,aliveCt,aliveT,meanHealthCt,meanHealthT,meanValueCT,meanValueT,roundTime,bombTime,bombDefused\n'
+    header = 'roundWinner,aliveCt,aliveT,meanHealthCt,meanHealthT,meanValueCT,meanValueT,roundTime,bombTime,bombDefusing,bombDefused\n'
     train_output.write(header)
     val_output.write(header)
 
@@ -54,7 +54,8 @@ def create_train_val_csv(train_output, val_output, split, random_seed, file):
                 str(g['aliveT']) + ',' + str(g['meanHealthCT']) + ',' +
                 str(g['meanHealthT']) + ',' + str(g['meanValueCT']) + ',' +
                 str(g['meanValueT']) + ',' + str(g['roundTime']) + ',' +
-                str(g['bombTime']) + ',' + str(int(g['bombDefused'])) + '\n'
+                str(g['bombTime']) + ',' + str(int(g['bombDefusing'])) + ',' + 
+                str(int(g['bombDefused'])) + '\n'
             )
             if i in train_i:
                 train_output.write(row)

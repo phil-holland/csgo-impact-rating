@@ -25,6 +25,7 @@ func TagDemo(demoPath string, pretty bool) string {
 	var startTick int
 	var plantTick int
 	var defuseTick int
+	var defusing bool
 	var tickBuffer []Tick
 	var lastKillTick int
 	var lastTScore int = -1
@@ -84,13 +85,14 @@ func TagDemo(demoPath string, pretty bool) string {
 		startTick = p.GameState().IngameTick()
 		plantTick = 0
 		defuseTick = 0
+		defusing = false
 		roundProblemsEncountered = 0
 
 		roundLive = true
 
 		tick := createTick(&p)
 		tick.Type = TickRoundStart
-		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -104,7 +106,7 @@ func TagDemo(demoPath string, pretty bool) string {
 			tickBuffer[len(tickBuffer)-1].GameState.AliveCT > 0 &&
 			tickBuffer[len(tickBuffer)-1].GameState.AliveT > 0 {
 			tick := createTick(&p)
-			tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+			tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
 			tick.Type = TickTimeExpired
 			for _, p := range p.GameState().Participants().Playing() {
 				if p.IsAlive() {
@@ -146,7 +148,31 @@ func TagDemo(demoPath string, pretty bool) string {
 		plantTick = p.GameState().IngameTick()
 		tick := createTick(&p)
 		tick.Type = TickBombPlant
-		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
+		tickBuffer = append(tickBuffer, tick)
+	})
+
+	p.RegisterEventHandler(func(e events.BombDefuseStart) {
+		if matchFinished || !IsLive(&p) || !roundLive {
+			return
+		}
+		defusing = true
+
+		tick := createTick(&p)
+		tick.Type = TickBombDefuseStart
+		tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
+		tickBuffer = append(tickBuffer, tick)
+	})
+
+	p.RegisterEventHandler(func(e events.BombDefuseAborted) {
+		if matchFinished || !IsLive(&p) || !roundLive {
+			return
+		}
+		defusing = false
+
+		tick := createTick(&p)
+		tick.Type = TickBombDefuseAbort
+		tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
 		tickBuffer = append(tickBuffer, tick)
 	})
 
@@ -159,14 +185,14 @@ func TagDemo(demoPath string, pretty bool) string {
 
 		// create two ticks, one pre defuse before the actual defuse
 		preTick := createTick(&p)
-		preTick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		preTick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
 		preTick.Type = TickPreBombDefuse
 		tickBuffer = append(tickBuffer, preTick)
 
 		defuseTick = p.GameState().IngameTick()
 
 		tick := createTick(&p)
-		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
 		tick.Type = TickBombDefuse
 
 		// add tag for each of the players alive when the bomb is defused
@@ -199,7 +225,7 @@ func TagDemo(demoPath string, pretty bool) string {
 				})
 			}
 		}
-		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
 		tick.Type = TickBombExplode
 
 		tickBuffer = append(tickBuffer, tick)
@@ -211,7 +237,7 @@ func TagDemo(demoPath string, pretty bool) string {
 		}
 
 		tick := createTick(&p)
-		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
 		tick.Type = TickItemPickUp
 		tickBuffer = append(tickBuffer, tick)
 	})
@@ -221,7 +247,7 @@ func TagDemo(demoPath string, pretty bool) string {
 			return
 		}
 		tick := createTick(&p)
-		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
 		tick.Type = TickItemDrop
 		tickBuffer = append(tickBuffer, tick)
 	})
@@ -244,12 +270,17 @@ func TagDemo(demoPath string, pretty bool) string {
 
 		// create the pre-damage tick
 		pretick := createTick(&p)
-		pretick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, nil)
+		pretick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, nil)
 		pretick.Type = TickPreDamage
 		tickBuffer = append(tickBuffer, pretick)
 
+		// if this player was defusing the bomb, set defusing to false
+		if e.Health <= 0 && e.Player.IsDefusing {
+			defusing = false
+		}
+
 		tick := createTick(&p)
-		tick.GameState = GetGameState(&p, startTick, plantTick, defuseTick, &e)
+		tick.GameState = GetGameState(&p, startTick, plantTick, defusing, defuseTick, &e)
 		tick.Type = TickDamage
 
 		// player damaging
@@ -260,6 +291,7 @@ func TagDemo(demoPath string, pretty bool) string {
 			})
 		}
 
+		// player flash assisting
 		if e.Player.FlashDurationTime() >= 1.0 {
 			if val, ok := lastFlashedPlayer[e.Player.SteamID64]; ok {
 				tick.Tags = append(tick.Tags, Tag{
@@ -423,7 +455,7 @@ func IsLive(p *dem.Parser) bool {
 }
 
 // GetGameState serialises the current state of the round using only the features we care about
-func GetGameState(p *dem.Parser, startTick int, plantTick int, defuseTick int, hurtEvent *events.PlayerHurt) GameState {
+func GetGameState(p *dem.Parser, startTick int, plantTick int, defusing bool, defuseTick int, hurtEvent *events.PlayerHurt) GameState {
 	var state GameState
 
 	state.AliveCT = 0
@@ -478,6 +510,10 @@ func GetGameState(p *dem.Parser, startTick int, plantTick int, defuseTick int, h
 		// bomb has been planted
 		state.BombTime = float64((*p).GameState().IngameTick()-plantTick) / (*p).TickRate()
 
+		// set bomb defusing flag
+		state.BombDefusing = defusing
+
+		// TODO: change this to boolean?
 		if defuseTick > 0 {
 			// bomb has been defused
 			state.BombDefused = true

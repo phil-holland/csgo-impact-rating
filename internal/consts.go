@@ -20,6 +20,12 @@ const (
 	// TickBombPlant denotes the tick where the bomb has just been planted
 	TickBombPlant string = "bombPlant"
 
+	// TickBombDefuseStart denotes the tick where a defuse has just started
+	TickBombDefuseStart string = "bombDefuseStart"
+
+	// TickBombDefuseAbort denotes the tick where a defuse has just been aborted
+	TickBombDefuseAbort string = "bombDefuseAbort"
+
 	// TickPreBombDefuse denotes the tick where the bomb has been defused, but
 	// before the bomb defusal has been processed
 	TickPreBombDefuse string = "preBombDefuse"

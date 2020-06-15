@@ -27,7 +27,7 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 	}
 
 	// build the input float slice
-	cols := 9
+	cols := 10
 	input := make([]float64, len(demo.Ticks)*cols)
 	for idx, tick := range demo.Ticks {
 		input[idx*cols] = float64(tick.GameState.AliveCT)
@@ -38,7 +38,8 @@ func EvaluateDemo(taggedFilePath string, verbosity int, modelPath string) {
 		input[idx*cols+5] = float64(tick.GameState.MeanValueT)
 		input[idx*cols+6] = float64(tick.GameState.RoundTime)
 		input[idx*cols+7] = float64(tick.GameState.BombTime)
-		input[idx*cols+8] = bToF64(tick.GameState.BombDefused)
+		input[idx*cols+8] = bToF64(tick.GameState.BombDefusing)
+		input[idx*cols+9] = bToF64(tick.GameState.BombDefused)
 	}
 
 	// load the LightGBM model in using leaves

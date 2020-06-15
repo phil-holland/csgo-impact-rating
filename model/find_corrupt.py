@@ -56,12 +56,16 @@ def find_corrupt(file):
                 findings[json_file] = 'Found unexpectedly high roundTime of {} at tick {}'.format(tick['gameState']['roundTime'], tick['tick'])
                 break
 
+            if tick['gameState']['bombDefusing'] == True and tick['gameState']['bombTime'] == 0.0:
+                findings[json_file] = 'Found bombDefusing = true whilst bombTime = 0 at tick {}'.format(tick['tick'])
+                break
+
     for f, reason in findings.items():
-        print('> Found possibly corrupt file: "{}"'.format(f))
+        print('> Found possible issue in file: "{}"'.format(f))
         print('Reason:\n {}\n'.format(reason))
 
     if len(findings.items()) == 0:
-        print('No corrupt files found')
+        print('No issues found')
 
 if __name__ == '__main__':
     find_corrupt() # pylint: disable=no-value-for-parameter
