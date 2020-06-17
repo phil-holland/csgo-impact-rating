@@ -63,8 +63,4 @@ const (
 
 	// ActionRetake represents a player defusing the bomb
 	ActionRetake string = "retake"
-
-	// ActionAlive represents a player simply being alive when the bomb
-	// explodes, or when time expires
-	ActionAlive string = "alive"
 )

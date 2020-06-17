@@ -80,12 +80,10 @@ type RatingMetadata struct {
 
 // TeamRating holds rating summary data for a whole team
 type TeamRating struct {
-	ID            int           `json:"id"`
-	Name          string        `json:"name"`
-	StartingSide  int           `json:"startingSide"`
-	FinalScore    int           `json:"finalScore"`
-	OverallRating OverallRating `json:"overallRating"`
-	RoundRatings  []RoundRating `json:"roundRatings"`
+	ID           int    `json:"id"`
+	Name         string `json:"name"`
+	StartingSide int    `json:"startingSide"`
+	FinalScore   int    `json:"finalScore"`
 }
 
 // PlayerRating holds rating summary data for a single player
@@ -142,5 +140,4 @@ type RatingBreakdown struct {
 	TradeDamageRating float64 `json:"tradeDamageRating"`
 	RetakeRating      float64 `json:"retakeRating"`
 	HurtRating        float64 `json:"hurtRating"`
-	AliveRating       float64 `json:"aliveRating"`
 }

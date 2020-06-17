@@ -58,20 +58,15 @@ The following action categories are considered when rewarding players with their
 
 - **Dealing damage**
   - This rewards players who damage an opponent's health
-  - This also punishes players for team-damage
+  - This also punishes players for taking damage themselves, and for any team-damage
 - **Trade damage** *(if an opponent takes damage very soon after they themselves have damaged the player in question)*
-  - This rewards players for taking damage so that a teammate can damage their attacker
+  - This rewards players for taking damage so that a teammate can damage their attacker (a.k.a "baiting" for someone else)
 - **Flash assist damage** *(if someone takes damage whilst blinded by a flashbang thrown by the player in question)*
   - This rewards players for flashing an enemy who then sustains damage
   - This also punishes players for team-flashing their teammate into taking damage
 - **Successfully retaking**
   - This rewards players who win rounds by retaking and defusing the bomb - all living CTs are rewarded when the bomb is defused
   - This also punishes T-side players who cannot prevent a defuse whilst alive
-- **Sustaining damage** *(being hurt)*
-  - This punishes players who take damage themselves
-- **Being alive at the end of a round** *(after time has run out or the bomb has exploded)*
-  - This rewards players for forcing their opponent to save
-  - This also punishes players for saving
 
 ## Prediction Model
 
@@ -84,7 +79,7 @@ Model analysis and instructions for how to train a new model can be found here: 
 The latest Impact Rating distribution for your system can be downloaded from this Github project's release page (for 99% of Windows users, this means downloading the `csgo-impact-rating_win64.zip` file).
 
 <p align="center">
-  <a href="https://github.com/Phil-Holland/csgo-impact-rating/releases/latest" style="font-size: 1.25em">
+  <a href="https://github.com/Phil-Holland/csgo-impact-rating/releases/latest" style="font-size: 1.3em">
     <b>Download Latest Version</b>
   </a>
 </p>
