@@ -11,5 +11,5 @@ require (
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/spf13/pflag v1.0.5
-	golang.org/x/sys v0.0.0-20200602100848-8d3cce7afc34 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 )
